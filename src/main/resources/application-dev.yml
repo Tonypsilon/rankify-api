@@ -2,7 +2,7 @@ spring:
   application:
     name: rankify-api
   datasource:
-    url: jdbc:postgresql://rankify-database:5432/rankify
+    url: jdbc:postgresql://database:5432/rankify
     username: rankify
     password: rankify
     driver-class-name: org.postgresql.Driver

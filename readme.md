@@ -104,4 +104,15 @@ export CONTAINER_ENGINE=docker
 ./setup.sh
 ```
 
+**Sandbox/CI Environments**: In some sandboxed or CI environments, container networking may have limitations that prevent proper DNS resolution between containers. In such cases:
+- The containerized build process will fall back to using local Maven if available
+- The individual components (database, application container) can be tested separately
+- In production environments, the full container orchestration works as designed
+
 **Health Checks**: The application includes health checks that verify both the application and database are ready before marking services as healthy.
+
+**Network Connectivity**: If you experience container networking issues:
+1. Ensure your container engine supports inter-container communication
+2. Check firewall settings that might block container traffic
+3. Try using Docker instead of Podman if networking issues persist
+4. Verify that ports 5432 and 8080 are available on your system
