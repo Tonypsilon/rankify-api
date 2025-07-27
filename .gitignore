@@ -34,3 +34,7 @@ build/
 
 ### Application Configuration ###
 src/main/resources/application.yml
+
+### Development Environment ###
+.env
+.env.local
