@@ -1,7 +1,7 @@
 # Containerfile for rankify-api application
 # Creates a self-contained Java 24 application container
 
-FROM docker.io/library/eclipse-temurin:17-jre-alpine
+FROM docker.io/library/eclipse-temurin:24-jre-alpine
 
 # Set working directory
 WORKDIR /app
