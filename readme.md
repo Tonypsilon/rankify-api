@@ -10,7 +10,7 @@ This project provides a machine-agnostic development environment that works on W
 
 - **IntelliJ IDEA Ultimate** (or any IDE of your choice)
 - **Container engine**: Podman (recommended) or Docker
-- **Optional**: podman-compose or docker-compose for easier orchestration
+- **Optional**: podman compose or docker-compose for easier orchestration
 
 ### One-Command Setup
 
@@ -44,7 +44,7 @@ If you prefer manual control over the process:
 
 3. **Start the environment**:
    ```bash
-   podman-compose up -d
+   podman compose up -d
    # or: docker-compose up -d
    ```
 
@@ -53,25 +53,25 @@ If you prefer manual control over the process:
 #### Making Code Changes
 After modifying the code, rebuild and restart:
 ```bash
-./build.sh && podman build -f Containerfile -t rankify-api:latest . && podman-compose up -d app
+./build.sh && podman build -f Containerfile -t rankify-api:latest . && podman compose up -d app
 ```
 
 #### Useful Commands
 ```bash
 # View application logs
-podman-compose logs -f app
+podman compose logs -f app
 
 # View database logs  
-podman-compose logs -f database
+podman compose logs -f database
 
 # Stop the environment
-podman-compose down
+podman compose down
 
 # Restart services
-podman-compose restart
+podman compose restart
 
 # Check service status
-podman-compose ps
+podman compose ps
 ```
 
 ### Environment Configuration
