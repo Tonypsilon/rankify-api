@@ -9,15 +9,15 @@ CONTAINER_ENGINE=${CONTAINER_ENGINE:-podman}
 
 # Determine compose command
 if [ "$CONTAINER_ENGINE" = "podman" ]; then
-    if command -v podman-compose &> /dev/null; then
-        COMPOSE_COMMAND="podman-compose"
+    if command -v podman &> /dev/null && podman compose version &> /dev/null; then
+        COMPOSE_COMMAND="podman compose"
     elif command -v docker &> /dev/null && docker compose version &> /dev/null; then
-        echo "Warning: podman-compose not found, using docker compose as fallback"
+        echo "Warning: podman compose not found, using docker compose as fallback"
         COMPOSE_COMMAND="docker compose"
         CONTAINER_ENGINE="docker"
     else
-        echo "Error: Neither podman-compose nor docker compose found"
-        echo "Please install podman-compose or docker compose"
+        echo "Error: Neither podman compose nor docker compose found"
+        echo "Please install podman with compose support or docker compose"
         exit 1
     fi
 else
