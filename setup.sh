@@ -9,15 +9,21 @@ CONTAINER_ENGINE=${CONTAINER_ENGINE:-podman}
 
 # Determine compose command
 if [ "$CONTAINER_ENGINE" = "podman" ]; then
-    if command -v podman &> /dev/null && podman compose version &> /dev/null; then
+    # First check for standalone podman-compose (common on macOS)
+    if command -v podman-compose &> /dev/null; then
+        echo "Using podman-compose standalone command"
+        COMPOSE_COMMAND="podman-compose"
+    # Then check for podman compose subcommand
+    elif command -v podman &> /dev/null && podman compose version &> /dev/null; then
         COMPOSE_COMMAND="podman compose"
+    # Fallback to docker compose if available
     elif command -v docker &> /dev/null && docker compose version &> /dev/null; then
-        echo "Warning: podman compose not found, using docker compose as fallback"
+        echo "Warning: Neither podman-compose nor podman compose found, using docker compose as fallback"
         COMPOSE_COMMAND="docker compose"
         CONTAINER_ENGINE="docker"
     else
-        echo "Error: Neither podman compose nor docker compose found"
-        echo "Please install podman with compose support or docker compose"
+        echo "Error: No container compose tool found"
+        echo "Please install podman-compose, podman with compose support, or docker compose"
         exit 1
     fi
 else
