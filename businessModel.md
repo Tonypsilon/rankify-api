@@ -83,20 +83,18 @@ Represents a participant's ranking of options in a poll.
 
 **Attributes:**
 - `pollId` (Long) - Reference to the poll being voted on
-- `participantId` (String) - Identifier for the voting participant
 - `rankings` (Map<Option, Integer>) - Option to rank mapping (1 = highest preference)
 - `submittedAt` (LocalDateTime) - When the vote was cast
 
 **Business Rules:**
 - Can only be cast for polls in ONGOING state
-- Each participant can vote only once per poll
 - Rankings start at 1 (highest preference)
 - Multiple options can have the same rank (ties allowed)
 - Unranked options are considered to have the lowest rank
 - At least one option must be ranked
 
 **Why Value Object?**
-Vote is a value object because once cast, it's immutable. The combination of poll, participant, and rankings defines its identity rather than a separate ID.
+Vote is a value object because once cast, it's immutable. Anonymous voting is supported, so votes do not contain voter identification.
 
 ### PollResult (Value Object)
 
@@ -107,13 +105,6 @@ Represents the calculated results of a completed poll.
 - `finalRanking` (List<RankedOption>) - Final ranking of all options
 - `totalVotes` (Integer) - Total number of votes cast
 - `calculatedAt` (LocalDateTime) - When results were calculated
-- `methodology` (String) - Algorithm used for calculation (e.g., "Borda Count", "Instant Runoff")
-
-**Supporting Value Object - RankedOption:**
-- `option` (Option) - The option being ranked
-- `finalRank` (Integer) - Final position in results (1 = winner)
-- `score` (Double) - Calculated score based on methodology
-- `firstPlaceVotes` (Integer) - Count of votes that ranked this option first
 
 **Business Rules:**
 - Can only be calculated for polls in FINISHED state
@@ -123,6 +114,23 @@ Represents the calculated results of a completed poll.
 
 **Why Value Object?**
 PollResult is a value object because it represents a snapshot of calculated results at a specific time. It's derived data that doesn't change once computed.
+
+### RankedOption (Value Object)
+
+Represents an option with its final ranking position in poll results.
+
+**Attributes:**
+- `option` (Option) - The option being ranked
+- `finalRank` (Integer) - Final position in results (1 = winner)
+- `firstPlaceVotes` (Integer) - Count of votes that ranked this option first
+
+**Business Rules:**
+- Final rank must be a positive integer
+- Multiple options can have the same final rank (ties allowed)
+- First place votes count cannot exceed total votes in the poll
+
+**Why Value Object?**
+RankedOption is a value object because it represents the immutable result of an option's performance in a completed poll.
 
 ## Entity Relationship Diagram
 
@@ -149,7 +157,6 @@ erDiagram
     
     Vote {
         Long pollId
-        String participantId
         LocalDateTime submittedAt
     }
     
@@ -157,12 +164,10 @@ erDiagram
         Long pollId
         Integer totalVotes
         LocalDateTime calculatedAt
-        String methodology
     }
     
     RankedOption {
         Integer finalRank
-        Double score
         Integer firstPlaceVotes
     }
     
@@ -204,7 +209,7 @@ erDiagram
 1. Generate Ballot (value object) from ONGOING poll
 2. Participant creates Vote (value object) with their rankings
 3. System validates vote against poll options
-4. Vote is stored (immutable)
+4. Vote is stored (immutable) - anonymous voting is supported
 
 ### Result Calculation
 1. Poll transitions to FINISHED state
