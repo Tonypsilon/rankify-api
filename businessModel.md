@@ -21,7 +21,7 @@ The Rankify API enables the creation and management of ranked voting polls. User
 The `Poll` is the central entity in our domain. It represents a voting session with a specific set of options.
 
 **Attributes:**
-- `id` (Long) - Unique identifier
+- `id` (UUID) - Unique identifier
 - `title` (String) - Human-readable name for the poll
 - `description` (String) - Optional detailed description
 - `options` (Set<Option>) - The set of unique options to be ranked
@@ -65,7 +65,7 @@ Option is a value object because it represents a simple value without identity. 
 Represents the voting form presented to a participant, containing all options for a specific poll.
 
 **Attributes:**
-- `pollId` (Long) - Reference to the poll
+- `pollId` (UUID) - Reference to the poll
 - `options` (List<Option>) - Ordered list of options as they appear on the ballot
 - `generatedAt` (LocalDateTime) - When the ballot was generated
 
@@ -82,7 +82,7 @@ Ballot is a value object because it's a temporary, immutable representation of v
 Represents a participant's ranking of options in a poll.
 
 **Attributes:**
-- `pollId` (Long) - Reference to the poll being voted on
+- `pollId` (UUID) - Reference to the poll being voted on
 - `rankings` (Map<Option, Integer>) - Option to rank mapping (1 = highest preference)
 - `submittedAt` (LocalDateTime) - When the vote was cast
 
@@ -101,7 +101,7 @@ Vote is a value object because once cast, it's immutable. Anonymous voting is su
 Represents the calculated results of a completed poll.
 
 **Attributes:**
-- `pollId` (Long) - Reference to the poll
+- `pollId` (UUID) - Reference to the poll
 - `finalRanking` (List<RankedOption>) - Final ranking of all options
 - `totalVotes` (Integer) - Total number of votes cast
 - `calculatedAt` (LocalDateTime) - When results were calculated
@@ -137,7 +137,7 @@ RankedOption is a value object because it represents the immutable result of an 
 ```mermaid
 erDiagram
     Poll {
-        Long id
+        UUID id
         String title
         String description
         LocalDateTime startDate
@@ -151,17 +151,17 @@ erDiagram
     }
     
     Ballot {
-        Long pollId
+        UUID pollId
         LocalDateTime generatedAt
     }
     
     Vote {
-        Long pollId
+        UUID pollId
         LocalDateTime submittedAt
     }
     
     PollResult {
-        Long pollId
+        UUID pollId
         Integer totalVotes
         LocalDateTime calculatedAt
     }
@@ -194,7 +194,7 @@ erDiagram
 ### Reference Rules
 
 - **Entities may reference value objects**: Poll contains Options
-- **Value objects may NOT reference entities**: All references from value objects to Poll use pollId (Long) rather than Poll entity reference
+- **Value objects may NOT reference entities**: All references from value objects to Poll use pollId (UUID) rather than Poll entity reference
 - **Value objects may reference other value objects**: Vote references Options, PollResult contains RankedOptions
 
 ## Business Scenarios
