@@ -15,7 +15,7 @@
 	<description>API application of the rankify project, an app for ranked voting</description>
 
 	<properties>
-		<java.version>24</java.version>
+		<java.version>17</java.version>
 	</properties>
 
 	<dependencies>
