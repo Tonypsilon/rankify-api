@@ -96,6 +96,8 @@ The compose.yml file is designed to be extensible. Future additions (like a fron
 
 ### Troubleshooting
 
+**Windows Compatibility**: The build and setup scripts are compatible with Git Bash on Windows. They use relative paths to ensure cross-platform compatibility and avoid Windows path conversion issues.
+
 **Build Issues**: The build process uses Java 24 in a container. If you encounter Java version issues, ensure you're using the containerized build script (`./build.sh`) rather than local Maven.
 
 **Container Engine**: By default, the scripts use Podman. To use Docker instead, set the environment variable:
