@@ -6,7 +6,6 @@
 set -e
 
 CONTAINER_ENGINE=${CONTAINER_ENGINE:-podman}
-PROJECT_ROOT=$(pwd)
 BUILD_ARGS=${1:-"clean install"}
 
 echo "Building rankify-api using $CONTAINER_ENGINE..."
@@ -27,7 +26,7 @@ fi
 
 # Use Maven container to build the project
 $CONTAINER_ENGINE run --rm \
-    -v "$PROJECT_ROOT":/workspace \
+    -v .:/workspace \
     -w /workspace \
     docker.io/library/maven:3.9.9-eclipse-temurin-24 \
     mvn $BUILD_ARGS
