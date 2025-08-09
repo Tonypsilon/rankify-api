@@ -83,6 +83,32 @@ This is particularly useful when:
 - Building the application with `./build.sh` when tests need database access
 - Local development where you want database access without the full application stack
 
+### Common Usage Patterns
+
+**Quick build with tests:**
+```bash
+./build.sh --with-db test
+```
+
+**Development workflow with separate database:**
+```bash
+# Terminal 1: Keep database running for development
+docker compose -f compose-db-only.yml up
+
+# Terminal 2: Run builds/tests as needed  
+./build.sh test
+./build.sh clean install
+
+# When done, stop database
+docker compose -f compose-db-only.yml down
+```
+
+**CI/CD friendly build:**
+```bash
+# Single command that handles everything
+CONTAINER_ENGINE=docker ./build.sh --with-db clean install
+```
+
 ### Development Workflow
 
 #### Making Code Changes
