@@ -36,6 +36,13 @@ If you prefer manual control over the process:
    ```bash
    ./build.sh
    ```
+   
+   Or, if your build process requires database connectivity (e.g., for integration tests):
+   ```bash
+   ./build.sh --with-db
+   ```
+   
+   The `--with-db` flag will automatically start a test database, run the build, and clean up the database afterward.
 
 2. **Build the application container**:
    ```bash
@@ -47,6 +54,34 @@ If you prefer manual control over the process:
    podman compose up -d
    # or: docker-compose up -d
    ```
+
+### Database-Only Setup for Development/Testing
+
+If you only need the database for running tests or development without the full application stack:
+
+1. **Start only the test database**:
+   ```bash
+   podman compose -f compose-db-only.yml up -d
+   # or: docker compose -f compose-db-only.yml up -d
+   ```
+
+2. **Stop the test database**:
+   ```bash
+   podman compose -f compose-db-only.yml down
+   # or: docker compose -f compose-db-only.yml down
+   ```
+
+The test database will be available at:
+- **Host**: localhost
+- **Port**: 5432  
+- **Database**: rankify_test
+- **Username**: rankify
+- **Password**: password
+
+This is particularly useful when:
+- Running tests that require a database connection
+- Building the application with `./build.sh` when tests need database access
+- Local development where you want database access without the full application stack
 
 ### Development Workflow
 
@@ -99,6 +134,18 @@ The compose.yml file is designed to be extensible. Future additions (like a fron
 **Windows Compatibility**: The build and setup scripts are compatible with Git Bash on Windows. They use relative paths to ensure cross-platform compatibility and avoid Windows path conversion issues.
 
 **Build Issues**: The build process uses Java 24 in a container. If you encounter Java version issues, ensure you're using the containerized build script (`./build.sh`) rather than local Maven.
+
+**Database Issues During Build**: If your build includes tests that require database connectivity, use:
+```bash
+./build.sh --with-db
+```
+This will start a temporary test database, run the build, and clean up automatically. The test database uses:
+- **Database**: rankify_test
+- **Username**: rankify  
+- **Password**: password
+- **Port**: 5432
+
+**Database Conflicts**: The test database (compose-db-only.yml) and application database (compose.yml) use the same port (5432) but different container names and database names to avoid conflicts. However, they cannot run simultaneously on the same port. Stop one before starting the other if needed.
 
 **Container Engine**: By default, the scripts use Podman. To use Docker instead, set the environment variable:
 ```bash

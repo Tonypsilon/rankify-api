@@ -2,85 +2,14 @@
 
 # Containerized build script for rankify-api
 # Uses a Maven container to build the project without requiring local Maven installation
-# Optionally manages a test database for builds that require database connectivity
 
 set -e
 
 CONTAINER_ENGINE=${CONTAINER_ENGINE:-podman}
 BUILD_ARGS=${1:-"clean install"}
-MANAGE_DB=${MANAGE_DB:-false}
-
-# Parse command line arguments
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        --with-db)
-            MANAGE_DB=true
-            shift
-            ;;
-        --db-engine)
-            CONTAINER_ENGINE="$2"
-            shift 2
-            ;;
-        *)
-            BUILD_ARGS="$1"
-            shift
-            ;;
-    esac
-done
 
 echo "Building rankify-api using $CONTAINER_ENGINE..."
 echo "Build arguments: mvn $BUILD_ARGS"
-echo "Database management: $MANAGE_DB"
-
-# Determine compose command for database management
-if [ "$MANAGE_DB" = true ]; then
-    if [ "$CONTAINER_ENGINE" = "podman" ]; then
-        # First check for standalone podman-compose (common on macOS)
-        if command -v podman-compose &> /dev/null; then
-            COMPOSE_COMMAND="podman-compose"
-        # Then check for podman compose subcommand
-        elif command -v podman &> /dev/null && podman compose version &> /dev/null; then
-            COMPOSE_COMMAND="podman compose"
-        else
-            echo "Warning: podman compose not found, falling back to docker compose"
-            COMPOSE_COMMAND="docker compose"
-        fi
-    else
-        COMPOSE_COMMAND="docker compose"
-    fi
-fi
-
-# Function to start test database
-start_test_db() {
-    echo "Starting test database..."
-    $COMPOSE_COMMAND -f compose-db-only.yml up -d
-    
-    echo "Waiting for database to be ready..."
-    # Simple wait for database startup
-    sleep 15
-    echo "Database startup wait completed."
-}
-
-# Function to stop test database
-stop_test_db() {
-    echo "Stopping test database..."
-    $COMPOSE_COMMAND -f compose-db-only.yml down
-}
-
-# Trap to ensure database cleanup on script exit
-cleanup() {
-    if [ "$MANAGE_DB" = true ]; then
-        stop_test_db
-    fi
-}
-
-# Set trap for cleanup
-trap cleanup EXIT INT TERM
-
-# Start test database if requested
-if [ "$MANAGE_DB" = true ]; then
-    start_test_db
-fi
 
 # Check if we're in a sandboxed environment and handle accordingly
 if [ -f /.dockerenv ] || [ -n "${GITHUB_ACTIONS}" ] || [ -n "${CI}" ]; then

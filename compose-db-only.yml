@@ -1,0 +1,16 @@
+services:
+  test-database:
+    image: docker.io/library/postgres:16-alpine
+    container_name: rankify-test-database
+    environment:
+      POSTGRES_DB: rankify_test
+      POSTGRES_USER: rankify
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_test_data:
+    driver: local
