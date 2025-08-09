@@ -28,6 +28,59 @@ After setup, your development environment will be running with:
 - **Health check**: http://localhost:8080/actuator/health  
 - **Database**: localhost:5432 (user: `rankify`, password: `rankify`, database: `rankify`)
 
+### Database-Only Setup
+
+If you need to start just the database container (for example, to run tests or build the application locally):
+
+**Using the build database script (recommended):**
+```bash
+# Start build database
+./build-db.sh start
+
+# Check database status
+./build-db.sh status
+
+# Stop build database
+./build-db.sh stop
+
+# Remove build database completely
+./build-db.sh remove
+```
+
+**Manual database container setup:**
+```bash
+# Start database container for testing/building
+podman run -d --name rankify-build-db \
+    -e POSTGRES_DB=rankify_test \
+    -e POSTGRES_USER=rankify \
+    -e POSTGRES_PASSWORD=password \
+    -p 5432:5432 \
+    docker.io/library/postgres:16-alpine
+
+# Stop and remove the build database when done
+podman stop rankify-build-db && podman rm rankify-build-db
+```
+
+Or with Docker:
+```bash
+# Start database container for testing/building
+docker run -d --name rankify-build-db \
+    -e POSTGRES_DB=rankify_test \
+    -e POSTGRES_USER=rankify \
+    -e POSTGRES_PASSWORD=password \
+    -p 5432:5432 \
+    docker.io/library/postgres:16-alpine
+
+# Stop and remove the build database when done
+docker stop rankify-build-db && docker rm rankify-build-db
+```
+
+This creates a separate database container specifically for building and testing, which won't conflict with the application's database container.
+
+**Note:** The `./build.sh` script automatically manages the build database - it starts the database before building and stops it afterward. To disable this behavior, set `MANAGE_BUILD_DB=false` before running the build script.
+
+**Important:** The build database and compose environment database both use port 5432, so they cannot run simultaneously. If you have the compose environment running (`docker compose up` or `podman compose up`), you'll need to stop it before starting the build database, and vice versa. The build database script will check for conflicts and provide helpful error messages.
+
 ### Manual Setup (Alternative)
 
 If you prefer manual control over the process:

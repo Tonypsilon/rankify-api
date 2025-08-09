@@ -7,9 +7,30 @@ set -e
 
 CONTAINER_ENGINE=${CONTAINER_ENGINE:-podman}
 BUILD_ARGS=${1:-"clean install"}
+MANAGE_BUILD_DB=${MANAGE_BUILD_DB:-true}
+
+# Function to cleanup build database
+cleanup_build_db() {
+    if [ "$MANAGE_BUILD_DB" = "true" ]; then
+        echo "Stopping build database..."
+        ./build-db.sh stop || true
+    fi
+}
+
+# Set up cleanup trap
+if [ "$MANAGE_BUILD_DB" = "true" ]; then
+    trap cleanup_build_db EXIT
+fi
 
 echo "Building rankify-api using $CONTAINER_ENGINE..."
 echo "Build arguments: mvn $BUILD_ARGS"
+
+# Start build database if needed (for tests)
+if [ "$MANAGE_BUILD_DB" = "true" ]; then
+    echo "Starting build database for tests..."
+    export CONTAINER_ENGINE
+    ./build-db.sh start
+fi
 
 # Check if we're in a sandboxed environment and handle accordingly
 if [ -f /.dockerenv ] || [ -n "${GITHUB_ACTIONS}" ] || [ -n "${CI}" ]; then
