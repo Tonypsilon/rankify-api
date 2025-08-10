@@ -1,17 +1,16 @@
 package de.tonypsilon.rankify.api.poll.business;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 public class Poll {
 
-    private final UUID id;
+    private final PollId id;
     private final PollTitle title;
     private final Ballot ballot;
     private Schedule schedule;
     private final LocalDateTime created;
 
-    public Poll(final UUID id,
+    public Poll(final PollId id,
                 final PollTitle title,
                 final Ballot ballot,
                 final Schedule schedule,
