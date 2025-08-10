@@ -43,4 +43,24 @@ public class Poll {
 
         return PollState.ONGOING;
     }
+
+    public PollId id() {
+        return id;
+    }
+
+    public PollTitle title() {
+        return title;
+    }
+
+    public Ballot ballot() {
+        return ballot;
+    }
+
+    public Schedule schedule() {
+        return schedule;
+    }
+
+    public LocalDateTime created() {
+        return created;
+    }
 }
