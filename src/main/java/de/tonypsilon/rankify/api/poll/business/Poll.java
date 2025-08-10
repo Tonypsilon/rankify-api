@@ -1,25 +1,24 @@
 package de.tonypsilon.rankify.api.poll.business;
 
 import java.time.LocalDateTime;
-import java.util.SequencedSet;
 import java.util.UUID;
 
 public class Poll {
 
     private final UUID id;
     private final PollTitle title;
-    private final SequencedSet<Option> options;
+    private final Ballot ballot;
     private Schedule schedule;
     private final LocalDateTime created;
 
     public Poll(final UUID id,
                 final PollTitle title,
-                final SequencedSet<Option> options,
+                final Ballot ballot,
                 final Schedule schedule,
                 final LocalDateTime created) {
         this.id = id;
         this.title = title;
-        this.options = options;
+        this.ballot = ballot;
         this.schedule = schedule;
         this.created = created;
     }
