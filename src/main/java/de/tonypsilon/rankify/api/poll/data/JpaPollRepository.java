@@ -9,28 +9,34 @@ import org.springframework.stereotype.Repository;
 import java.util.UUID;
 
 @Repository
-public interface JpaPollRepository extends PollRepository, JpaRepository<PollEntity, UUID> {
+class JpaPollRepository implements PollRepository {
+
+    private final SpringDataPollRepository springDataPollRepository;
+
+    JpaPollRepository(final SpringDataPollRepository springDataPollRepository) {
+        this.springDataPollRepository = springDataPollRepository;
+    }
 
     @Override
-    default boolean existsById(PollId id) {
+    public boolean existsById(PollId id) {
         if (id == null) {
             throw new IllegalArgumentException("Poll ID must not be null");
         }
-        return existsById(id.value());
+        return springDataPollRepository.existsById(id.value());
     }
 
     @Override
-    default void update(Poll poll) {
+    public void update(Poll poll) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    default PollId create(Poll poll) {
+    public PollId create(Poll poll) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    default Poll getById(PollId pollId) {
+    public Poll getById(PollId pollId) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 }
