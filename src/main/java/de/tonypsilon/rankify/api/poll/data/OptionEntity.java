@@ -10,7 +10,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "options")
 public class OptionEntity {
-
+    
     @EmbeddedId
     private OptionId id;
 

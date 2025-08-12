@@ -5,8 +5,8 @@ import java.time.LocalDateTime;
 public class Poll {
 
     private final PollId id;
-    private final PollTitle title;
-    private final Ballot ballot;
+    private PollTitle title;
+    private Ballot ballot;
     private Schedule schedule;
     private final LocalDateTime created;
 
@@ -32,15 +32,12 @@ public class Poll {
 
     private PollState state() {
         LocalDateTime now = LocalDateTime.now();
-
-        if (schedule.start() == null || schedule.start().isAfter(now)) {
-            return PollState.IN_PREPARATION;
-        }
-
         if (schedule.end() != null && schedule.end().isBefore(now)) {
             return PollState.FINISHED;
         }
-
+        if (schedule.start() == null || schedule.start().isAfter(now)) {
+            return PollState.IN_PREPARATION;
+        }
         return PollState.ONGOING;
     }
 
