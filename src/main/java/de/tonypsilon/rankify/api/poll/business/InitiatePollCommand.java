@@ -1,4 +1,6 @@
 package de.tonypsilon.rankify.api.poll.business;
 
-public record InitiatePollCommand(String title) {
+public record InitiatePollCommand(PollTitle title,
+                                  Ballot ballot,
+                                  Schedule schedule) {
 }
