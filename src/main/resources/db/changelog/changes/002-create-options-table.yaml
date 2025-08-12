@@ -1,0 +1,30 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-options-table
+      author: liquibase
+      changes:
+        - createTable:
+            tableName: options
+            columns:
+              - column:
+                  name: poll_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: text
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: options
+            columnNames: poll_id, text
+            constraintName: pk_options
+        - addForeignKeyConstraint:
+            baseTableName: options
+            baseColumnNames: poll_id
+            referencedTableName: polls
+            referencedColumnNames: id
+            constraintName: fk_options_poll_id
+            onDelete: CASCADE
+

@@ -1,0 +1,6 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/changes/001-create-polls-table.yaml
+  - include:
+      file: db/changelog/changes/002-create-options-table.yaml
+

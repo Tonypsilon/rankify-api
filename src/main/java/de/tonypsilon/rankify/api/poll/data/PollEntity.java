@@ -18,10 +18,10 @@ public class PollEntity {
     @Column
     private String title;
 
-    @Column
+    @Column(name = "start_time")
     private LocalDateTime start;
 
-    @Column
+    @Column(name = "end_time")
     private LocalDateTime end;
 
     @Column

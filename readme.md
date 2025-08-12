@@ -82,6 +82,22 @@ The development environment uses the `dev` Spring profile with the following con
 - Database name: `rankify`
 - Database credentials: `rankify` / `rankify`
 
+### Database Schema Management
+
+This project uses **Liquibase** as the database changelog management tool with YAML-based changesets. The database schema is version-controlled and automatically applied during application startup.
+
+**Changelog Structure:**
+- Master changelog: `src/main/resources/db/changelog/db.changelog-master.yaml`
+- Individual changesets: `src/main/resources/db/changelog/changes/`
+
+**Key Features:**
+- Automatic schema creation and migration on startup
+- Version-controlled database changes
+- Rollback capabilities for schema changes
+- Cross-environment consistency (dev, test, prod)
+
+Hibernate's DDL auto-generation is disabled (`ddl-auto: none`) in favor of Liquibase-managed schema evolution.
+
 ### Extending the Environment
 
 The compose.yml file is designed to be extensible. Future additions (like a frontend application) can be easily added as new services to the existing configuration.
@@ -91,6 +107,7 @@ The compose.yml file is designed to be extensible. Future additions (like a fron
 - **Java Version**: 24
 - **Spring Boot Version**: 3.4.1
 - **Database**: PostgreSQL 16
+- **Database Changelog**: Liquibase (YAML-based)
 - **Container Base**: Eclipse Temurin Alpine Linux
 - **Build Tool**: Maven 3.9.9 (containerized)
 
