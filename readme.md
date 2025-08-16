@@ -1,5 +1,11 @@
 # Rankify API
 
+[![CI Build and Test](https://github.com/Tonypsilon/rankify-api/actions/workflows/ci.yml/badge.svg)](https://github.com/Tonypsilon/rankify-api/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/Tonypsilon/rankify-api/branch/main/graph/badge.svg)](https://codecov.io/gh/Tonypsilon/rankify-api)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Tonypsilon_rankify-api&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Tonypsilon_rankify-api)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=Tonypsilon_rankify-api&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=Tonypsilon_rankify-api)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=Tonypsilon_rankify-api&metric=maintainability_rating)](https://sonarcloud.io/summary/new_code?id=Tonypsilon_rankify-api)
+
 API application of the rankify project, an app for ranked voting.
 
 ## Quick Start Development Environment
