@@ -117,6 +117,39 @@ The compose.yml file is designed to be extensible. Future additions (like a fron
 - **Container Base**: Eclipse Temurin Alpine Linux
 - **Build Tool**: Maven 3.9.9 (containerized)
 
+### CI/CD Pipeline
+
+This project includes a comprehensive CI/CD pipeline using GitHub Actions that ensures code quality and security:
+
+**Automated Workflows:**
+- **Continuous Integration**: Runs on every push and pull request to `main` and `develop` branches
+- **Security Scanning**: Weekly dependency vulnerability scans and security analysis
+
+**CI Workflow Features:**
+- ✅ **Java 24 Environment**: Uses Eclipse Temurin JDK 24 for consistency with development environment
+- ✅ **TestContainers Integration**: Automatically spins up PostgreSQL containers for integration tests
+- ✅ **Test Coverage**: JaCoCo generates coverage reports with 80%+ target
+- ✅ **Static Code Analysis**: SonarQube analysis for code quality, security, and maintainability
+- ✅ **Dependency Caching**: Maven dependencies cached for faster builds
+- ✅ **Artifact Uploads**: Test results, coverage reports, and Docker images stored as artifacts
+- ✅ **Docker Build**: Application containerized and validated on main branch pushes
+
+**Security Scanning:**
+- 🔒 **OWASP Dependency Check**: Scans for known vulnerabilities in dependencies
+- 🔒 **Trivy Security Scan**: Filesystem vulnerability scanning with SARIF upload
+- 🔒 **Automated Security Alerts**: Integration with GitHub Security tab
+
+**Quality Gates:**
+- All tests must pass before merge
+- Coverage reports uploaded to Codecov
+- SonarQube quality gates enforce maintainability standards
+- Security vulnerabilities prevent builds with CVSS score ≥ 7
+
+**Setup Requirements:**
+To enable full CI/CD functionality, configure these repository secrets:
+- `SONAR_TOKEN`: SonarCloud authentication token for static analysis
+- `CODECOV_TOKEN`: (Optional) Codecov token for enhanced coverage reporting
+
 ### Troubleshooting
 
 **Windows Compatibility**: The build and setup scripts are compatible with Git Bash on Windows. They use relative paths to ensure cross-platform compatibility and avoid Windows path conversion issues.
