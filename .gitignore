@@ -38,3 +38,11 @@ src/main/resources/application.yml
 ### Development Environment ###
 .env
 .env.local
+
+### SonarQube ###
+.sonar/
+.scannerwork/
+
+### Coverage Reports ###
+jacoco.exec
+*.exec
