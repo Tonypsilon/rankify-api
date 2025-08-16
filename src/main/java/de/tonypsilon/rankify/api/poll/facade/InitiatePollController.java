@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
-@RestController("polls")
+@RestController()
 public class InitiatePollController {
 
     private final InitiatePollUseCase initiatePollUseCase;
@@ -29,7 +29,7 @@ public class InitiatePollController {
      * @return ResponseEntity containing the UUID of the newly created poll with HTTP 201 status
      * @throws IllegalArgumentException if the command is null or contains invalid data
      */
-    @PostMapping
+    @PostMapping("polls")
     @Command
     public ResponseEntity<UUID> initiatePoll(@RequestBody InitiatePollCommand command) {
         PollId pollId = initiatePollUseCase.initiatePoll(command);

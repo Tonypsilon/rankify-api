@@ -4,6 +4,7 @@ import de.tonypsilon.rankify.api.poll.business.Poll;
 import de.tonypsilon.rankify.api.poll.business.PollId;
 import de.tonypsilon.rankify.api.poll.business.PollNotFoundException;
 import de.tonypsilon.rankify.api.poll.business.PollRepository;
+import jakarta.annotation.Nonnull;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -62,6 +63,7 @@ class JpaPollRepository implements PollRepository {
     }
 
     @Override
+    @Nonnull
     public Poll getById(PollId pollId) {
         if (pollId == null) {
             throw new IllegalArgumentException("Poll ID must not be null");

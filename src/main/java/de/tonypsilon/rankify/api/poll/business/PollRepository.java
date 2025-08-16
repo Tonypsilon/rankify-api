@@ -1,5 +1,7 @@
 package de.tonypsilon.rankify.api.poll.business;
 
+import jakarta.annotation.Nonnull;
+
 /**
  * Repository interface for managing Poll entities.
  * Provides methods to create, update, check existence, and retrieve polls by their ID.
@@ -48,5 +50,6 @@ public interface PollRepository {
      * @throws IllegalArgumentException if the pollId is null
      * @throws PollNotFoundException    if no poll with the given ID exists
      */
+    @Nonnull
     Poll getById(PollId pollId);
 }

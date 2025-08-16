@@ -22,7 +22,15 @@ public class Poll {
         this.created = created;
     }
 
-    public void finishVoting() {
+    public void startVoting() {
+        LocalDateTime now = LocalDateTime.now();
+        if (this.state() != PollState.IN_PREPARATION) {
+            throw new IllegalStateException("Cannot start voting when poll is not in preparation");
+        }
+        this.schedule = this.schedule.withStart(now);
+    }
+
+    public void endVoting() {
         LocalDateTime now = LocalDateTime.now();
         if (this.state() != PollState.ONGOING) {
             throw new IllegalStateException("Cannot finish voting when poll is not ongoing");
