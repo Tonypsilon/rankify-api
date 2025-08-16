@@ -2,8 +2,6 @@ package de.tonypsilon.rankify.api.poll.business;
 
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-
 @Service
 public class ChangePollStateUseCase {
 
