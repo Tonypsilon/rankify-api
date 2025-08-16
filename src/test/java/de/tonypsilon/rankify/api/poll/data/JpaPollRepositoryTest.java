@@ -39,21 +39,20 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @Testcontainers
 class JpaPollRepositoryTest {
 
-    @SuppressWarnings("resource") // Testcontainers manages lifecycle; suppress false positive.
     @Container
-    static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
+    @SuppressWarnings("resource") // Testcontainers manages the lifecycle of this container
+    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine")
             .withDatabaseName("rankify_test")
             .withUsername("test")
             .withPassword("test");
 
     @DynamicPropertySource
     static void registerDataSourceProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
+        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
+        registry.add("spring.datasource.username", POSTGRES::getUsername);
+        registry.add("spring.datasource.password", POSTGRES::getPassword);
         registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop"); // use entity model
-        registry.add("spring.liquibase.enabled", () -> "false"); // keep test lean, rely on DDL auto
+        // Liquibase builds schema; keep ddl-auto none.
     }
 
     @Autowired

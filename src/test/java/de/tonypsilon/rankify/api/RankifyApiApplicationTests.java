@@ -12,26 +12,24 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Testcontainers
 class RankifyApiApplicationTests {
 
-    @SuppressWarnings("resource") // Managed by Testcontainers JUnit extension
     @Container
-    static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
+    @SuppressWarnings("resource") // Testcontainers manages the lifecycle of this container
+    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine")
             .withDatabaseName("rankify_test")
             .withUsername("test")
             .withPassword("test");
 
     @DynamicPropertySource
     static void overrideDataSourceProps(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
+        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
+        registry.add("spring.datasource.username", POSTGRES::getUsername);
+        registry.add("spring.datasource.password", POSTGRES::getPassword);
         registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
-        // Let Liquibase run against container DB (schema creation). If wanting faster startup, could disable.
-        // registry.add("spring.liquibase.enabled", () -> "false");
     }
 
     @Test
     void contextLoads() {
-        // If the application context starts, DB connectivity + migrations worked.
+        // Successful context load implies DB connectivity and migrations ok.
     }
 
 }
