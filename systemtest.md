@@ -33,7 +33,7 @@ This section tests the primary use case of creating a poll, starting voting, and
 
 #### Step 1: Create a New Poll
 
-**Purpose:** Create a poll in IN_PREPARATION state with two voting options.
+**Purpose:** Create a poll with two voting options.
 
 **Command:**
 ```bash
@@ -63,14 +63,14 @@ curl -X POST http://localhost:8080/polls \
 **What this does:**
 - Creates a new poll with the title "Lunch Options"
 - Adds two voting options: "Pizza" and "Sushi"
-- Sets no specific start/end times (null values), leaving the poll in IN_PREPARATION state
+- Sets no specific start/end times (null values), leaving the poll ready for voting
 - Returns the unique identifier for the created poll
 
 **Save the returned UUID for subsequent commands (replace `{POLL_ID}` below with the actual UUID).**
 
 #### Step 2: Get Initial Poll Details
 
-**Purpose:** Verify the poll was created correctly and is in IN_PREPARATION state.
+**Purpose:** Verify the poll was created correctly.
 
 **Command:**
 ```bash
@@ -90,21 +90,19 @@ curl -X GET http://localhost:8080/polls/{POLL_ID} \
     "start": null,
     "end": null
   },
-  "created": "2024-01-15T10:30:00.123456",
-  "state": "IN_PREPARATION"
+  "created": "2024-01-15T10:30:00.123456"
 }
 ```
 
 **What this verifies:**
 - Poll exists and is retrievable
 - Title and options are correctly stored
-- Schedule has null start/end times
-- State is IN_PREPARATION (poll not yet started)
+- Schedule has null start/end times  
 - Created timestamp is populated
 
 #### Step 3: Start Voting
 
-**Purpose:** Transition the poll from IN_PREPARATION to ONGOING state.
+**Purpose:** Start voting for the poll.
 
 **Command:**
 ```bash
@@ -120,13 +118,12 @@ curl -X PATCH http://localhost:8080/polls/{POLL_ID} \
 - Body: Empty
 
 **What this does:**
-- Changes the poll state from IN_PREPARATION to ONGOING
 - Sets the schedule.start time to the current timestamp
 - Allows voting to begin on this poll
 
 #### Step 4: Verify Poll is Ongoing
 
-**Purpose:** Confirm the poll state changed and start time was set.
+**Purpose:** Confirm voting was started and start time was set.
 
 **Command:**
 ```bash
@@ -146,20 +143,19 @@ curl -X GET http://localhost:8080/polls/{POLL_ID} \
     "start": "2024-01-15T10:35:00.456789",
     "end": null
   },
-  "created": "2024-01-15T10:30:00.123456",
-  "state": "ONGOING"
+  "created": "2024-01-15T10:30:00.123456"
 }
 ```
 
 **What this verifies:**
-- State changed to ONGOING
 - Start time is now populated with current timestamp
 - End time remains null
+- Poll is now accepting votes
 - All other fields unchanged
 
 #### Step 5: End Voting
 
-**Purpose:** Transition the poll from ONGOING to FINISHED state.
+**Purpose:** End voting for the poll.
 
 **Command:**
 ```bash
@@ -175,7 +171,6 @@ curl -X PATCH http://localhost:8080/polls/{POLL_ID} \
 - Body: Empty
 
 **What this does:**
-- Changes the poll state from ONGOING to FINISHED
 - Sets the schedule.end time to the current timestamp
 - Closes voting on this poll
 
@@ -201,14 +196,13 @@ curl -X GET http://localhost:8080/polls/{POLL_ID} \
     "start": "2024-01-15T10:35:00.456789",
     "end": "2024-01-15T10:40:00.789012"
   },
-  "created": "2024-01-15T10:30:00.123456",
-  "state": "FINISHED"
+  "created": "2024-01-15T10:30:00.123456"
 }
 ```
 
 **What this verifies:**
-- State changed to FINISHED
 - End time is now populated with current timestamp
+- Poll is no longer accepting new votes
 - Start time remains from when voting started
 - End time is after or equal to start time
 - Poll has completed the full lifecycle: IN_PREPARATION → ONGOING → FINISHED
@@ -332,7 +326,7 @@ curl -X PATCH http://localhost:8080/polls/{POLL_ID} \
 
 #### Error Test 5: Invalid State Transition
 
-**Purpose:** Verify that polls cannot be started twice (invalid state transition).
+**Purpose:** Verify that polls cannot be started twice (business rule enforcement).
 
 First, create and start a poll:
 ```bash
@@ -362,9 +356,9 @@ curl -X PATCH http://localhost:8080/polls/$POLL_ID \
 
 **Expected Response:**
 - Status Code: `400 Bad Request` or `409 Conflict`
-- Body: Error message indicating invalid state transition
+- Body: Error message indicating invalid operation
 
-**What this tests:** Business logic that prevents invalid poll state transitions.
+**What this tests:** Business logic that prevents invalid poll operations.
 
 #### Error Test 6: Get Non-Existent Poll
 
