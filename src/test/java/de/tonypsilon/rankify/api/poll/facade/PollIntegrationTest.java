@@ -5,7 +5,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -68,6 +73,13 @@ class PollIntegrationTest {
         assertThat(initialDetails.options())
                 .containsExactly("Pizza", "Sushi");
         assertThat(initialDetails.title()).isEqualTo("Lunch options");
+
+        // Fetch ballot via dedicated endpoint and verify options & order
+        BallotResponse ballot = getBallot(pollId);
+        assertThat(ballot).isNotNull();
+        assertThat(ballot.options()).hasSize(2);
+        assertThat(ballot.options().stream().map(OptionResponse::text).toList())
+                .containsExactly("Pizza", "Sushi");
 
         // 3. Start voting
         patchPoll(pollId, new PatchRequest("START_VOTING", null, null, null), HttpStatus.NO_CONTENT);
@@ -172,6 +184,13 @@ class PollIntegrationTest {
         return details.getBody();
     }
 
+    private BallotResponse getBallot(UUID pollId) {
+        ResponseEntity<BallotResponse> resp = rest.getForEntity("/polls/" + pollId + "/ballot", BallotResponse.class);
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(resp.getBody()).isNotNull();
+        return resp.getBody();
+    }
+
     private UUID createValidPoll() {
         CreatePollRequest body = new CreatePollRequest(new TitlePart("Valid"), new BallotPart(List.of(new OptionPart("A"), new OptionPart("B"))), new SchedulePart(null, null));
         ResponseEntity<UUID> resp = rest.postForEntity("/polls", body, UUID.class);
@@ -195,20 +214,41 @@ class PollIntegrationTest {
     }
 
     // --- Test-local request record types to craft valid & invalid JSON payloads ------------
-    record CreatePollRequest(TitlePart title, BallotPart ballot, SchedulePart schedule) {}
-    record TitlePart(String value) {}
-    record BallotPart(List<OptionPart> options) {}
-    record OptionPart(String text) {}
-    record SchedulePart(LocalDateTime start, LocalDateTime end) {}
+    record CreatePollRequest(TitlePart title, BallotPart ballot, SchedulePart schedule) {
+    }
+
+    record TitlePart(String value) {
+    }
+
+    record BallotPart(List<OptionPart> options) {
+    }
+
+    record OptionPart(String text) {
+    }
+
+    record SchedulePart(LocalDateTime start, LocalDateTime end) {
+    }
 
     // For PATCH requests; mirrors shape expected by PatchPollCommand (operation + optional fields)
-    record PatchRequest(String operation, Map<String, Object> newTitle, Map<String, Object> newSchedule, Map<String, Object> newBallot) {}
+    record PatchRequest(String operation, Map<String, Object> newTitle, Map<String, Object> newSchedule,
+                        Map<String, Object> newBallot) {
+    }
 
     // --- Facade response mirror -----------------------------------------------------------
     record PollDetailsResponse(UUID id,
                                String title,
                                List<String> options,
                                ScheduleResponse schedule,
-                               LocalDateTime created) {}
-    record ScheduleResponse(LocalDateTime start, LocalDateTime end) {}
+                               LocalDateTime created) {
+    }
+
+    record ScheduleResponse(LocalDateTime start, LocalDateTime end) {
+    }
+
+    // Added response mirrors for ballot endpoint
+    record BallotResponse(List<OptionResponse> options) {
+    }
+
+    record OptionResponse(String text) {
+    }
 }

@@ -1,5 +1,7 @@
 package de.tonypsilon.rankify.api.poll.business;
 
+import jakarta.annotation.Nonnull;
+
 import java.time.LocalDateTime;
 
 public class Poll {
@@ -57,7 +59,11 @@ public class Poll {
         return title;
     }
 
+    @Nonnull
     public Ballot ballot() {
+        if (ballot == null) {
+            throw new IllegalStateException("Ballot is not initialized");
+        }
         return ballot;
     }
 
