@@ -3,6 +3,9 @@ package de.tonypsilon.rankify.api.poll.business;
 import jakarta.annotation.Nonnull;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
 
 public class Poll {
 
@@ -73,5 +76,36 @@ public class Poll {
 
     public LocalDateTime created() {
         return created;
+    }
+
+    /**
+     * Casts a vote for this poll with the given rankings.
+     * The rankings must contain only options from the ballot, and each option must have a rank.
+     * If an option is not ranked, it will be assigned a sentinel rank.
+     *
+     * @param rankings A map of options to their ranks.
+     * @return A new {@link Vote} instance representing the cast vote.
+     * @throws PollNotReadyForVotingException if the poll is not in an ongoing state.
+     * @throws IllegalArgumentException       if any option in the rankings does not belong to this poll's ballot.
+     */
+    public Vote castVote(Map<Option, Integer> rankings) {
+        if (state() != PollState.ONGOING) {
+            throw new PollNotReadyForVotingException(id);
+        }
+        Objects.requireNonNull(rankings, "rankings must not be null");
+        // Validate supplied options & ranks
+        Map<Option, Integer> completedRankings = new LinkedHashMap<>();
+        for (Map.Entry<Option, Integer> entry : rankings.entrySet()) {
+            Option option = entry.getKey();
+            if (!ballot().options().contains(option)) {
+                throw new IllegalArgumentException("Option " + option + " does not belong to this poll's ballot");
+            }
+            completedRankings.put(option, entry.getValue());
+        }
+        // Add missing options with sentinel rank
+        for (Option ballotOption : ballot().options()) {
+            completedRankings.putIfAbsent(ballotOption, RecordedVote.MAX_RANKING);
+        }
+        return new RecordedVote(id, completedRankings);
     }
 }
