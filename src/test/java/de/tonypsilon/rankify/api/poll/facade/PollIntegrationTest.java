@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Full-stack integration tests hitting real HTTP endpoints with an embedded server + PostgreSQL Testcontainer.
- * Covers poll creation, lifecycle state transitions (start/end voting) and input validation error scenarios.
+ * Covers poll creation, lifecycle management (start/end voting) and input validation error scenarios.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
@@ -49,7 +49,7 @@ class PollIntegrationTest {
 
     @Test
     void createStartEndPollLifecycle() {
-        // 1. Create poll (no start/end set) => state implicitly IN_PREPARATION (start null, end null)
+        // 1. Create poll (no start/end set) => poll is in preparation (start null, end null)
         CreatePollRequest createBody = new CreatePollRequest(
                 new TitlePart("Lunch options"),
                 new BallotPart(List.of(new OptionPart("Pizza"), new OptionPart("Sushi"))),
@@ -68,14 +68,12 @@ class PollIntegrationTest {
         assertThat(initialDetails.options())
                 .containsExactly("Pizza", "Sushi");
         assertThat(initialDetails.title()).isEqualTo("Lunch options");
-        assertThat(initialDetails.state()).isEqualTo("IN_PREPARATION");
 
         // 3. Start voting
         patchPoll(pollId, new PatchRequest("START_VOTING", null, null, null), HttpStatus.NO_CONTENT);
         PollDetailsResponse afterStart = getDetails(pollId);
         assertThat(afterStart.schedule().start()).isNotNull();
         assertThat(afterStart.schedule().end()).isNull();
-        assertThat(afterStart.state()).isEqualTo("ONGOING");
 
         // 4. End voting
         patchPoll(pollId, new PatchRequest("END_VOTING", null, null, null), HttpStatus.NO_CONTENT);
@@ -83,7 +81,6 @@ class PollIntegrationTest {
         assertThat(afterEnd.schedule().start()).isNotNull();
         assertThat(afterEnd.schedule().end()).isNotNull();
         assertThat(afterEnd.schedule().end()).isAfterOrEqualTo(afterEnd.schedule().start());
-        assertThat(afterEnd.state()).isEqualTo("FINISHED");
     }
 
     // --- Validation / error scenarios -----------------------------------------------------
@@ -212,7 +209,6 @@ class PollIntegrationTest {
                                String title,
                                List<String> options,
                                ScheduleResponse schedule,
-                               LocalDateTime created,
-                               String state) {}
+                               LocalDateTime created) {}
     record ScheduleResponse(LocalDateTime start, LocalDateTime end) {}
 }
