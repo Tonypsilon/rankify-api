@@ -88,7 +88,7 @@ public class Poll {
      * @throws PollNotReadyForVotingException if the poll is not in an ongoing state.
      * @throws IllegalArgumentException       if any option in the rankings does not belong to this poll's ballot.
      */
-    public Vote castVote(Map<Option, Integer> rankings) {
+    public Vote castVote(final Map<Option, Integer> rankings) {
         if (state() != PollState.ONGOING) {
             throw new PollNotReadyForVotingException(id);
         }

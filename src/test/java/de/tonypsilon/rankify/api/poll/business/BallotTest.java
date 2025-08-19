@@ -7,11 +7,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.SequencedSet;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 class BallotTest {
 
@@ -27,27 +25,26 @@ class BallotTest {
         Ballot ballot = new Ballot(optionsList);
 
         // Then: The ballot should be created successfully
-        assertNotNull(ballot);
-        assertEquals(2, ballot.options().size());
-        assertTrue(ballot.options().contains(new Option("Option A")));
-        assertTrue(ballot.options().contains(new Option("Option B")));
+        assertThat(ballot).isNotNull();
+        assertThat(ballot.options())
+                .containsExactly(new Option("Option A"), new Option("Option B"));
     }
 
     @Test
     void testConstructorOverloadingWithSequencedSet() {
         // Given: A SequencedSet of options
         SequencedSet<Option> optionsSet = new LinkedHashSet<>();
-        optionsSet.add(new Option("Option A"));
         optionsSet.add(new Option("Option B"));
+        optionsSet.add(new Option("Option A"));
 
         // When: Creating a Ballot with the SequencedSet constructor
         Ballot ballot = new Ballot(optionsSet);
 
         // Then: The ballot should be created successfully
-        assertNotNull(ballot);
-        assertEquals(2, ballot.options().size());
-        assertTrue(ballot.options().contains(new Option("Option A")));
-        assertTrue(ballot.options().contains(new Option("Option B")));
+        assertThat(ballot).isNotNull();
+        assertThat(ballot.options())
+                .hasSize(2)
+                .contains(new Option("Option B"), new Option("Option A"));
     }
 
     @Test
@@ -61,8 +58,8 @@ class BallotTest {
         Ballot ballot = new Ballot(optionsList);
 
         // Then: The ballot should be created successfully
-        assertNotNull(ballot);
-        assertEquals(2, ballot.options().size());
+        assertThat(ballot).isNotNull();
+        assertThat(ballot.options()).hasSize(2);
     }
 
     @Test
@@ -76,8 +73,8 @@ class BallotTest {
         Ballot ballot = new Ballot(optionsSet);
 
         // Then: The ballot should be created successfully
-        assertNotNull(ballot);
-        assertEquals(2, ballot.options().size());
+        assertThat(ballot).isNotNull();
+        assertThat(ballot.options()).hasSize(2);
     }
 
     @Test
@@ -90,11 +87,9 @@ class BallotTest {
         );
 
         // When & Then: Creating a Ballot should throw an exception
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> new Ballot(optionsWithDuplicates)
-        );
-        assertEquals("Duplicate option found: Option A", exception.getMessage());
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> new Ballot(optionsWithDuplicates))
+                .withMessage("Duplicate option found: Option A");
     }
 
     @Test
@@ -103,15 +98,14 @@ class BallotTest {
         SequencedSet<Option> optionsSet = new LinkedHashSet<>();
         optionsSet.add(new Option("Option A"));
         optionsSet.add(new Option("Option B"));
-        // Attempt to add duplicate - Set will ignore it
-        optionsSet.add(new Option("Option A"));
+        optionsSet.add(new Option("Option A")); // ignored by Set
 
         // When: Creating a Ballot with SequencedSet constructor
         Ballot ballot = new Ballot(optionsSet);
 
         // Then: The ballot should be created successfully with only unique options
-        assertNotNull(ballot);
-        assertEquals(2, ballot.options().size()); // Only 2 unique options
+        assertThat(ballot).isNotNull();
+        assertThat(ballot.options()).hasSize(2); // Only 2 unique options
     }
 
     @Test
@@ -127,8 +121,8 @@ class BallotTest {
         SequencedSet<Option> retrievedOptions = ballot.options();
 
         // Then: Modifying the returned set should not affect the original ballot
-        assertDoesNotThrow(retrievedOptions::clear);
-        assertEquals(2, ballot.options().size()); // Original ballot unchanged
+        assertThatCode(retrievedOptions::clear).doesNotThrowAnyException();
+        assertThat(ballot.options()).hasSize(2); // Original ballot unchanged
     }
 
     @Test
@@ -137,11 +131,9 @@ class BallotTest {
         List<Option> singleOption = List.of(new Option("Only Option"));
 
         // When & Then: Creating a Ballot should throw an exception
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> new Ballot(singleOption)
-        );
-        assertEquals("Ballot must have at least two options", exception.getMessage());
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> new Ballot(singleOption))
+                .withMessage("Ballot must have at least two options");
     }
 
     @Test
@@ -152,10 +144,8 @@ class BallotTest {
         optionsWithNull.add(null);
 
         // When & Then: Creating a Ballot should throw an exception
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> new Ballot(optionsWithNull)
-        );
-        assertEquals("Option must not be null", exception.getMessage());
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> new Ballot(optionsWithNull))
+                .withMessage("Option must not be null");
     }
 }
