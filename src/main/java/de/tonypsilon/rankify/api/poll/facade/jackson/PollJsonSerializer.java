@@ -7,11 +7,10 @@ import de.tonypsilon.rankify.api.poll.business.Option;
 import de.tonypsilon.rankify.api.poll.business.Poll;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 
 /**
  * Explicit JSON serializer for domain Poll to keep business layer free from JSON concerns.
- * Produces facade-friendly shape with derived state and flattened options.
+ * Produces facade-friendly shape with flattened options.
  */
 class PollJsonSerializer extends JsonSerializer<Poll> {
 
@@ -43,21 +42,9 @@ class PollJsonSerializer extends JsonSerializer<Poll> {
         gen.writeEndObject();
 
         gen.writeObjectField("created", poll.created());
-        gen.writeStringField("state", deriveState(poll));
         gen.writeEndObject();
     }
 
-    private String deriveState(Poll poll) {
-        LocalDateTime start = poll.schedule().start();
-        LocalDateTime end = poll.schedule().end();
-        LocalDateTime now = LocalDateTime.now();
-        if (end != null && end.isBefore(now)) {
-            return "FINISHED";
-        }
-        if (start == null || start.isAfter(now)) {
-            return "IN_PREPARATION";
-        }
-        return "ONGOING";
-    }
+
 }
 
