@@ -1,0 +1,41 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-rankings-table
+      author: liquibase
+      changes:
+        - createTable:
+            tableName: rankings
+            columns:
+              - column:
+                  name: vote_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: option_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rank
+                  type: int
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: rankings
+            columnNames: vote_id, option_id
+            constraintName: pk_rankings
+        - addForeignKeyConstraint:
+            baseTableName: rankings
+            baseColumnNames: vote_id
+            referencedTableName: votes
+            referencedColumnNames: id
+            constraintName: fk_rankings_vote_id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: rankings
+            baseColumnNames: option_id
+            referencedTableName: options
+            referencedColumnNames: id
+            constraintName: fk_rankings_option_id
+            onDelete: CASCADE

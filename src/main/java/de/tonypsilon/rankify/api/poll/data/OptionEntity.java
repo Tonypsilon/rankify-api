@@ -1,86 +1,69 @@
 package de.tonypsilon.rankify.api.poll.data;
 
 import de.tonypsilon.rankify.api.poll.business.PollId;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
-import java.io.Serializable;
-import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Table(name = "options")
+@Table(name = "options", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_options_poll_text", columnNames = {"poll_id", "text"})
+})
 public class OptionEntity {
-    
-    @EmbeddedId
-    private OptionId id;
 
-    public OptionEntity() {
+    @Id
+    private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "poll_id", nullable = false, foreignKey = @ForeignKey(name = "fk_options_poll_id"))
+    private PollEntity poll;
+
+    @Column(name = "text", nullable = false)
+    private String text;
+
+    // position column managed via @OrderColumn on PollEntity.options list
+
+    public OptionEntity() { /* for JPA */ }
+
+    public OptionEntity(PollEntity poll, String text) {
+        this.id = UUID.randomUUID();
+        this.poll = poll;
+        this.text = text;
     }
 
-    public OptionEntity(PollId pollId, String text) {
-        this.id = new OptionId(pollId.value(), text);
-    }
-
-    public PollId getPollId() {
-        return new PollId(id.pollId);
-    }
-
-    public String getText() {
-        return id.text;
-    }
-
-    public OptionId getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(OptionId id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
-    @Embeddable
-    public static class OptionId implements Serializable {
+    public PollEntity getPoll() {
+        return poll;
+    }
 
-        @Column(name = "poll_id")
-        private UUID pollId;
+    public void setPoll(PollEntity poll) {
+        this.poll = poll;
+    }
 
-        @Column(name = "text")
-        private String text;
+    public PollId getPollId() {
+        return poll == null ? null : new PollId(poll.getId());
+    }
 
-        public OptionId() {
-        }
+    public String getText() {
+        return text;
+    }
 
-        public OptionId(UUID pollId, String text) {
-            this.pollId = pollId;
-            this.text = text;
-        }
-
-        public UUID getPollId() {
-            return pollId;
-        }
-
-        public void setPollId(UUID pollId) {
-            this.pollId = pollId;
-        }
-
-        public String getText() {
-            return text;
-        }
-
-        public void setText(String text) {
-            this.text = text;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            OptionId optionId = (OptionId) o;
-            return Objects.equals(pollId, optionId.pollId) && Objects.equals(text, optionId.text);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(pollId, text);
-        }
+    public void setText(String text) {
+        this.text = text;
     }
 }

@@ -52,4 +52,6 @@ public interface PollRepository {
      */
     @Nonnull
     Poll getById(PollId pollId);
+
+    void saveVote(Vote vote);
 }

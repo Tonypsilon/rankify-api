@@ -2,12 +2,10 @@ package de.tonypsilon.rankify.api.poll.data;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
-interface SpringDataOptionRepository extends JpaRepository<OptionEntity, OptionEntity.OptionId> {
+interface SpringDataOptionRepository extends JpaRepository<OptionEntity, UUID> {
 
-    List<OptionEntity> findByIdPollIdOrderByIdText(UUID pollId);
-
-    void deleteByIdPollId(UUID pollId);
+    Optional<OptionEntity> findByPoll_IdAndText(UUID pollId, String text);
 }

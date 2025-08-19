@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({PollMapper.class, JpaPollRepository.class})
+@Import({PollMapper.class, JpaPollRepository.class, JpaVoteRepository.class})
 @Testcontainers
 class JpaPollRepositoryTest {
 

@@ -1,10 +1,10 @@
 databaseChangeLog:
   - changeSet:
-      id: create-options-table
+      id: create-votes-table
       author: liquibase
       changes:
         - createTable:
-            tableName: options
+            tableName: votes
             columns:
               - column:
                   name: id
@@ -18,22 +18,15 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: text
-                  type: varchar(255)
+                  name: submitted_at
+                  type: timestamp
                   constraints:
                     nullable: false
-              - column:
-                  name: position
-                  type: int
-        - addUniqueConstraint:
-            tableName: options
-            columnNames: poll_id, text
-            constraintName: uk_options_poll_text
         - addForeignKeyConstraint:
-            baseTableName: options
+            baseTableName: votes
             baseColumnNames: poll_id
             referencedTableName: polls
             referencedColumnNames: id
-            constraintName: fk_options_poll_id
+            constraintName: fk_votes_poll_id
             onDelete: CASCADE
-# Note: position column integrated here; former unique constraint on (poll_id, position) intentionally omitted.
+

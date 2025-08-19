@@ -3,4 +3,7 @@ databaseChangeLog:
       file: db/changelog/changes/001-create-polls-table.yaml
   - include:
       file: db/changelog/changes/002-create-options-table.yaml
-
+  - include:
+      file: db/changelog/changes/003-create-votes-table.yaml
+  - include:
+      file: db/changelog/changes/004-create-rankings-table.yaml
