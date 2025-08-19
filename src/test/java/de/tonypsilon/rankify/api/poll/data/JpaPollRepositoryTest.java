@@ -21,7 +21,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -71,7 +70,7 @@ class JpaPollRepositoryTest {
         assertThat(loaded.id().value()).isEqualTo(poll.id().value());
         assertThat(loaded.title().value()).isEqualTo(poll.title().value());
         assertThat(loaded.ballot().options().stream().map(Option::text).toList())
-                .containsExactlyElementsOf(sorted(optionTexts));
+                .containsExactlyElementsOf(optionTexts);
         assertThat(loaded.schedule().start()).isEqualTo(poll.schedule().start());
         assertThat(loaded.schedule().end()).isNull();
     }
@@ -97,7 +96,7 @@ class JpaPollRepositoryTest {
 
         assertThat(loaded.ballot().options()).hasSize(newOptions.size());
         assertThat(loaded.ballot().options().stream().map(Option::text).toList())
-                .containsExactlyElementsOf(sorted(newOptions));
+                .containsExactlyElementsOf(newOptions);
         assertThat(loaded.schedule().start()).isEqualTo(newSchedule.start());
         assertThat(loaded.schedule().end()).isEqualTo(newSchedule.end());
     }
@@ -159,9 +158,5 @@ class JpaPollRepositoryTest {
 
     private Poll cloneChanging(Poll original, List<String> optionTexts, Schedule schedule) {
         return new Poll(original.id(), original.title(), new Ballot(optionTexts.stream().map(Option::new).toList()), schedule, original.created());
-    }
-
-    private List<String> sorted(List<String> texts) {
-        return texts.stream().sorted(Comparator.naturalOrder()).toList();
     }
 }

@@ -8,7 +8,6 @@ import de.tonypsilon.rankify.api.poll.business.PollTitle;
 import de.tonypsilon.rankify.api.poll.business.Schedule;
 import org.springframework.stereotype.Component;
 
-import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.SequencedSet;
 
@@ -36,9 +35,8 @@ class PollMapper {
         Schedule schedule = new Schedule(entity.getStart(), entity.getEnd());
 
         SequencedSet<Option> options = new LinkedHashSet<>();
-        entity.getOptions().stream()
-                .sorted(Comparator.comparing(OptionEntity::getText))
-                .forEach(o -> options.add(new Option(o.getText())));
+        // Use the order provided by JPA List (managed via @OrderColumn position) - do NOT sort alphabetically
+        entity.getOptions().forEach(o -> options.add(new Option(o.getText())));
 
         Ballot ballot = new Ballot(options);
 
