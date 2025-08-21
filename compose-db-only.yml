@@ -3,9 +3,9 @@ services:
     image: docker.io/library/postgres:latest
     container_name: rankify-test-database
     environment:
-      POSTGRES_DB: rankify_test
+      POSTGRES_DB: rankify
       POSTGRES_USER: rankify
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: rankify
     ports:
       - "5432:5432"
     volumes:
