@@ -87,6 +87,10 @@ class PollIntegrationTest {
         assertThat(afterStart.schedule().start()).isNotNull();
         assertThat(afterStart.schedule().end()).isNull();
 
+        // 3a. Cast votes while ongoing
+        castVote(pollId, Map.of("Pizza", 1, "Sushi", 2));
+        castVote(pollId, Map.of("Sushi", 1)); // partial ranking (Pizza will get sentinel)
+
         // 4. End voting
         patchPoll(pollId, new PatchRequest("END_VOTING", null, null, null), HttpStatus.NO_CONTENT);
         PollDetailsResponse afterEnd = getDetails(pollId);
@@ -207,6 +211,13 @@ class PollIntegrationTest {
         return rest.exchange("/polls/" + pollId, HttpMethod.PATCH, new HttpEntity<>(body, jsonHeaders()), String.class);
     }
 
+    private void castVote(UUID pollId, Map<String, Integer> rankings) {
+        HttpHeaders headers = jsonHeaders();
+        CastVoteRequest body = new CastVoteRequest(rankings);
+        ResponseEntity<Void> resp = rest.postForEntity("/polls/" + pollId + "/votes", new HttpEntity<>(body, headers), Void.class);
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+    }
+
     private HttpHeaders jsonHeaders() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -250,5 +261,9 @@ class PollIntegrationTest {
     }
 
     record OptionResponse(String text) {
+    }
+
+    // Local record mirroring request of CastVoteController
+    record CastVoteRequest(Map<String, Integer> rankings) {
     }
 }

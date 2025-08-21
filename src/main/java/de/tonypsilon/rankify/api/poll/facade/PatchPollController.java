@@ -24,9 +24,14 @@ public class PatchPollController {
     @Command
     public ResponseEntity<Void> patchPoll(@PathVariable final UUID pollId,
                                           @RequestBody final PatchPollCommand command) {
+        if (command == null) {
+            return ResponseEntity.badRequest().build();
+        }
         switch (command.operation()) {
             case START_VOTING -> changePollStateUseCase.startVoting(new PollId(pollId));
             case END_VOTING -> changePollStateUseCase.endVoting(new PollId(pollId));
+            case UPDATE_TITLE, UPDATE_SCHEDULE, UPDATE_OPTIONS ->
+                    throw new UnsupportedOperationException("Not supported yet.");
         }
         return ResponseEntity.noContent().build();
     }

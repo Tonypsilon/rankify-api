@@ -1,6 +1,7 @@
 # Manual System Test with cURL
 
-This document provides comprehensive manual system tests for the Rankify API using cURL commands. These tests validate the core poll management functionality and error handling behavior.
+This document provides comprehensive manual system tests for the Rankify API using cURL commands. These tests validate
+the core poll management functionality and error handling behavior.
 
 ## Prerequisites
 
@@ -16,11 +17,13 @@ Before running these tests, ensure that:
 ## Environment Setup
 
 Start the application using the provided setup script:
+
 ```bash
 ./setup.sh
 ```
 
 Wait for the services to be ready (usually 30-60 seconds), then verify:
+
 ```bash
 curl http://localhost:8080/actuator/health
 ```
@@ -29,13 +32,15 @@ curl http://localhost:8080/actuator/health
 
 ### Happy Path: Complete Poll Lifecycle
 
-This section tests the primary use case of creating a poll, starting voting, and ending voting while checking poll details at each step.
+This section tests the primary use case of creating a poll, starting voting, and ending voting while checking poll
+details at each step.
 
 #### Step 1: Create a New Poll
 
 **Purpose:** Create a poll with two voting options.
 
 **Command:**
+
 ```bash
 curl -X POST http://localhost:8080/polls \
   -H "Content-Type: application/json" \
@@ -57,10 +62,12 @@ curl -X POST http://localhost:8080/polls \
 ```
 
 **Expected Response:**
+
 - Status Code: `201 Created`
 - Body: A UUID string (e.g., `"550e8400-e29b-41d4-a716-446655440000"`)
 
 **What this does:**
+
 - Creates a new poll with the title "Lunch Options"
 - Adds two voting options: "Pizza" and "Sushi"
 - Sets no specific start/end times (null values), leaving the poll ready for voting
@@ -73,19 +80,25 @@ curl -X POST http://localhost:8080/polls \
 **Purpose:** Verify the poll was created correctly.
 
 **Command:**
+
 ```bash
 curl -X GET http://localhost:8080/polls/{POLL_ID} \
   -H "Accept: application/json"
 ```
 
 **Expected Response:**
+
 - Status Code: `200 OK`
 - Body structure:
+
 ```json
 {
   "id": "{POLL_ID}",
   "title": "Lunch Options",
-  "options": ["Pizza", "Sushi"],
+  "options": [
+    "Pizza",
+    "Sushi"
+  ],
   "schedule": {
     "start": null,
     "end": null
@@ -95,9 +108,10 @@ curl -X GET http://localhost:8080/polls/{POLL_ID} \
 ```
 
 **What this verifies:**
+
 - Poll exists and is retrievable
 - Title and options are correctly stored
-- Schedule has null start/end times  
+- Schedule has null start/end times
 - Created timestamp is populated
 
 #### Step 3: Start Voting
@@ -105,6 +119,7 @@ curl -X GET http://localhost:8080/polls/{POLL_ID} \
 **Purpose:** Start voting for the poll.
 
 **Command:**
+
 ```bash
 curl -X PATCH http://localhost:8080/polls/{POLL_ID} \
   -H "Content-Type: application/json" \
@@ -114,31 +129,87 @@ curl -X PATCH http://localhost:8080/polls/{POLL_ID} \
 ```
 
 **Expected Response:**
+
 - Status Code: `204 No Content`
 - Body: Empty
 
 **What this does:**
+
 - Sets the schedule.start time to the current timestamp
 - Allows voting to begin on this poll
+
+#### Step 3a: Cast Votes While Ongoing
+
+**Purpose:** Submit ranked votes for the poll while it is in the ongoing state.
+
+**Command (full ranking):**
+
+```bash
+curl -X POST http://localhost:8080/polls/{POLL_ID}/votes \
+  -H "Content-Type: application/json" \
+  -d '{
+    "rankings": {"Pizza": 1, "Sushi": 2}
+  }'
+```
+
+**Expected Response:**
+
+- Status Code: `204 No Content`
+
+**Command (partial ranking – omitted options get lowest/sentinel rank internally):**
+
+```bash
+curl -X POST http://localhost:8080/polls/{POLL_ID}/votes \
+  -H "Content-Type: application/json" \
+  -d '{
+    "rankings": {"Sushi": 1}
+  }'
+```
+
+**Expected Response:**
+
+- Status Code: `204 No Content`
+
+**What this does:**
+
+- Records two separate votes
+- First voter prefers Pizza over Sushi
+- Second voter only ranks Sushi; Pizza is auto-assigned an implicit lowest priority rank
+- Votes are persisted (in the `votes` and `rankings` tables)
+
+**Verification (optional DB check):**
+
+```bash
+docker compose exec database psql -U rankify -d rankify -c "SELECT count(*) FROM votes;"
+docker compose exec database psql -U rankify -d rankify -c "SELECT * FROM rankings ORDER BY vote_id, rank;"
+```
+
+You can cast multiple additional votes to simulate more traffic.
 
 #### Step 4: Verify Poll is Ongoing
 
 **Purpose:** Confirm voting was started and start time was set.
 
 **Command:**
+
 ```bash
 curl -X GET http://localhost:8080/polls/{POLL_ID} \
   -H "Accept: application/json"
 ```
 
 **Expected Response:**
+
 - Status Code: `200 OK`
 - Body changes from Step 2:
+
 ```json
 {
   "id": "{POLL_ID}",
   "title": "Lunch Options",
-  "options": ["Pizza", "Sushi"],
+  "options": [
+    "Pizza",
+    "Sushi"
+  ],
   "schedule": {
     "start": "2024-01-15T10:35:00.456789",
     "end": null
@@ -148,6 +219,7 @@ curl -X GET http://localhost:8080/polls/{POLL_ID} \
 ```
 
 **What this verifies:**
+
 - Start time is now populated with current timestamp
 - End time remains null
 - Poll is now accepting votes
@@ -158,6 +230,7 @@ curl -X GET http://localhost:8080/polls/{POLL_ID} \
 **Purpose:** End voting for the poll.
 
 **Command:**
+
 ```bash
 curl -X PATCH http://localhost:8080/polls/{POLL_ID} \
   -H "Content-Type: application/json" \
@@ -167,10 +240,12 @@ curl -X PATCH http://localhost:8080/polls/{POLL_ID} \
 ```
 
 **Expected Response:**
+
 - Status Code: `204 No Content`
 - Body: Empty
 
 **What this does:**
+
 - Sets the schedule.end time to the current timestamp
 - Closes voting on this poll
 
@@ -179,19 +254,25 @@ curl -X PATCH http://localhost:8080/polls/{POLL_ID} \
 **Purpose:** Confirm the poll completed the full lifecycle successfully.
 
 **Command:**
+
 ```bash
 curl -X GET http://localhost:8080/polls/{POLL_ID} \
   -H "Accept: application/json"
 ```
 
 **Expected Response:**
+
 - Status Code: `200 OK`
 - Body changes from Step 4:
+
 ```json
 {
   "id": "{POLL_ID}",
   "title": "Lunch Options",
-  "options": ["Pizza", "Sushi"],
+  "options": [
+    "Pizza",
+    "Sushi"
+  ],
   "schedule": {
     "start": "2024-01-15T10:35:00.456789",
     "end": "2024-01-15T10:40:00.789012"
@@ -201,6 +282,7 @@ curl -X GET http://localhost:8080/polls/{POLL_ID} \
 ```
 
 **What this verifies:**
+
 - End time is now populated with current timestamp
 - Poll is no longer accepting new votes
 - Start time remains from when voting started
@@ -218,6 +300,7 @@ These tests validate that the API properly handles invalid requests and returns 
 **Purpose:** Verify that polls requiring at least two options are enforced.
 
 **Command:**
+
 ```bash
 curl -X POST http://localhost:8080/polls \
   -H "Content-Type: application/json" \
@@ -238,6 +321,7 @@ curl -X POST http://localhost:8080/polls \
 ```
 
 **Expected Response:**
+
 - Status Code: `400 Bad Request`
 - Body: Error message indicating ballot must have at least two options
 
@@ -248,6 +332,7 @@ curl -X POST http://localhost:8080/polls \
 **Purpose:** Verify that poll titles cannot be empty or blank.
 
 **Command:**
+
 ```bash
 curl -X POST http://localhost:8080/polls \
   -H "Content-Type: application/json" \
@@ -269,6 +354,7 @@ curl -X POST http://localhost:8080/polls \
 ```
 
 **Expected Response:**
+
 - Status Code: `400 Bad Request`
 - Body: Error message indicating title cannot be blank
 
@@ -279,6 +365,7 @@ curl -X POST http://localhost:8080/polls \
 **Purpose:** Verify that poll options must be unique.
 
 **Command:**
+
 ```bash
 curl -X POST http://localhost:8080/polls \
   -H "Content-Type: application/json" \
@@ -300,6 +387,7 @@ curl -X POST http://localhost:8080/polls \
 ```
 
 **Expected Response:**
+
 - Status Code: `400 Bad Request`
 - Body: Error message indicating duplicate options are not allowed
 
@@ -310,6 +398,7 @@ curl -X POST http://localhost:8080/polls \
 **Purpose:** Verify that patch operations must be valid enum values.
 
 **Command:**
+
 ```bash
 curl -X PATCH http://localhost:8080/polls/{POLL_ID} \
   -H "Content-Type: application/json" \
@@ -319,6 +408,7 @@ curl -X PATCH http://localhost:8080/polls/{POLL_ID} \
 ```
 
 **Expected Response:**
+
 - Status Code: `400 Bad Request`
 - Body: Error message indicating operation cannot be null
 
@@ -329,6 +419,7 @@ curl -X PATCH http://localhost:8080/polls/{POLL_ID} \
 **Purpose:** Verify that polls cannot be started twice (business rule enforcement).
 
 First, create and start a poll:
+
 ```bash
 # Create poll
 POLL_ID=$(curl -s -X POST http://localhost:8080/polls \
@@ -346,6 +437,7 @@ curl -X PATCH http://localhost:8080/polls/$POLL_ID \
 ```
 
 Then attempt to start voting again:
+
 ```bash
 curl -X PATCH http://localhost:8080/polls/$POLL_ID \
   -H "Content-Type: application/json" \
@@ -355,6 +447,7 @@ curl -X PATCH http://localhost:8080/polls/$POLL_ID \
 ```
 
 **Expected Response:**
+
 - Status Code: `400 Bad Request` or `409 Conflict`
 - Body: Error message indicating invalid operation
 
@@ -365,12 +458,14 @@ curl -X PATCH http://localhost:8080/polls/$POLL_ID \
 **Purpose:** Verify proper handling of requests for polls that don't exist.
 
 **Command:**
+
 ```bash
 curl -X GET http://localhost:8080/polls/00000000-0000-0000-0000-000000000000 \
   -H "Accept: application/json"
 ```
 
 **Expected Response:**
+
 - Status Code: `404 Not Found`
 - Body: Error message indicating poll not found
 
@@ -391,7 +486,7 @@ curl -X GET http://localhost:8080/polls/00000000-0000-0000-0000-000000000000 \
 ### Expected Timing
 
 - Poll creation: < 1 second
-- State transitions: < 1 second  
+- State transitions: < 1 second
 - Poll retrieval: < 500ms
 - Error responses: < 500ms
 
@@ -405,6 +500,7 @@ curl -X GET http://localhost:8080/polls/00000000-0000-0000-0000-000000000000 \
 ### Automation Helper
 
 To run the complete happy path test automatically:
+
 ```bash
 #!/bin/bash
 # Create poll and capture ID
