@@ -83,6 +83,11 @@ class JpaPollRepositoryTest {
     }
 
     @Test
+    void existsByIdReturnsFalseWhenNotPresent() {
+        assertThat(repository.existsById(new PollId())).isFalse();
+    }
+
+    @Test
     void updateReplacesOptionsAndScheduleReflectingSortedOptionOrder() {
         Poll poll = newPollWithOptions("Color", List.of("Red", "Blue"), null, null);
         PollId id = repository.create(poll);
@@ -102,6 +107,31 @@ class JpaPollRepositoryTest {
     }
 
     @Test
+    void updateWithSameOptionsDoesNotAlterOptions() {
+        Poll poll = newPollWithOptions("Colors", List.of("Red", "Blue", "Green"), null, null);
+        PollId id = repository.create(poll);
+
+        // Re-create poll instance with same option set but reversed order (sorted lists equal) and changed schedule
+        Schedule newSchedule = new Schedule(LocalDateTime.now().minusMinutes(2), LocalDateTime.now().plusMinutes(2));
+        Poll reordered = new Poll(id, poll.title(), new Ballot(List.of("Green", "Blue", "Red").stream().map(Option::new).toList()), newSchedule, poll.created());
+
+        repository.update(reordered);
+        Poll loaded = repository.getById(id);
+
+        // Expect original order preserved (since order replacement not triggered)
+        assertThat(loaded.ballot().options().stream().map(Option::text).toList())
+                .containsExactlyElementsOf(poll.ballot().options().stream().map(Option::text).toList());
+        assertThat(loaded.schedule().start()).isEqualTo(newSchedule.start());
+        assertThat(loaded.schedule().end()).isEqualTo(newSchedule.end());
+    }
+
+    @Test
+    void updateUnknownPollThrowsPollNotFound() {
+        Poll poll = newPollWithOptions("Unknown", List.of("A", "B"), null, null); // need >=2 options
+        assertThatThrownBy(() -> repository.update(poll)).isInstanceOf(PollNotFoundException.class);
+    }
+
+    @Test
     void getByIdUnknownThrows() {
         PollId random = new PollId(UUID.randomUUID());
         assertThatThrownBy(() -> repository.getById(random))
@@ -117,6 +147,13 @@ class JpaPollRepositoryTest {
         Poll loaded = repository.getById(poll.id());
         assertThat(loaded.schedule().end()).isEqualTo(end);
         assertThat(loaded.schedule().start()).isEqualTo(start);
+    }
+
+    @Test
+    void saveVoteNullThrows() {
+        assertThatThrownBy(() -> repository.saveVote(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Vote must not be null");
     }
 
     @Nested

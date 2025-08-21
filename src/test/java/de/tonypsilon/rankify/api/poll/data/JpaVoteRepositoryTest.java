@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -53,6 +54,9 @@ class JpaVoteRepositoryTest {
     @Autowired
     private SpringDataVoteRepository springDataVoteRepository;
 
+    @Autowired
+    private JpaVoteRepository jpaVoteRepository;
+
     @Test
     void saveVotePersistsVoteAndRankings() {
         // Arrange: create poll with options
@@ -79,6 +83,49 @@ class JpaVoteRepositoryTest {
         assertThat(stored.getRankings()).hasSize(optionTexts.size());
         assertThat(stored.getRankings().stream().map(r -> r.getOption().getText()).toList())
                 .containsExactlyInAnyOrderElementsOf(optionTexts);
+    }
+
+    @Test
+    void saveNullVoteThrows() {
+        assertThatThrownBy(() -> jpaVoteRepository.save(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Vote must not be null");
+    }
+
+    @Test
+    void saveVoteWithNullOptionThrows() {
+        Poll poll = newPollWithOptions("Null Option Poll", List.of("Alpha", "Beta"));
+        pollRepository.create(poll);
+        Map<Option, Integer> rankings = new LinkedHashMap<>();
+        rankings.put(null, 1);
+        Vote vote = new TestVote(poll.id(), rankings);
+        assertThatThrownBy(() -> jpaVoteRepository.save(vote))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Option and rank must not be null");
+    }
+
+    @Test
+    void saveVoteWithNullRankThrows() {
+        Poll poll = newPollWithOptions("Null Rank Poll", List.of("Alpha", "Beta"));
+        pollRepository.create(poll);
+        Map<Option, Integer> rankings = new LinkedHashMap<>();
+        rankings.put(new Option("Alpha"), null);
+        Vote vote = new TestVote(poll.id(), rankings);
+        assertThatThrownBy(() -> jpaVoteRepository.save(vote))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Option and rank must not be null");
+    }
+
+    @Test
+    void saveVoteWithUnknownOptionThrows() {
+        Poll poll = newPollWithOptions("Unknown Option Poll", List.of("Alpha", "Beta"));
+        pollRepository.create(poll);
+        Map<Option, Integer> rankings = new LinkedHashMap<>();
+        rankings.put(new Option("NotPresent"), 1); // not in poll
+        Vote vote = new TestVote(poll.id(), rankings);
+        assertThatThrownBy(() -> jpaVoteRepository.save(vote))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Option not found for poll: NotPresent");
     }
 
     private Poll newPollWithOptions(String title, List<String> optionTexts) {
