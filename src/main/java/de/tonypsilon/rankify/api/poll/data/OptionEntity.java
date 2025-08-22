@@ -29,8 +29,6 @@ public class OptionEntity {
     @Column(name = "text", nullable = false)
     private String text;
 
-    // position column managed via @OrderColumn on PollEntity.options list
-
     public OptionEntity() { /* for JPA */ }
 
     public OptionEntity(PollEntity poll, String text) {

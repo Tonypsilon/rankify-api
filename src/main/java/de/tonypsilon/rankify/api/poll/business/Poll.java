@@ -45,7 +45,8 @@ public class Poll {
 
     private PollState state() {
         LocalDateTime now = LocalDateTime.now();
-        if (schedule.end() != null && schedule.end().isBefore(now)) {
+        // Consider finished if end is at or before now
+        if (schedule.end() != null && !schedule.end().isAfter(now)) {
             return PollState.FINISHED;
         }
         if (schedule.start() == null || schedule.start().isAfter(now)) {
