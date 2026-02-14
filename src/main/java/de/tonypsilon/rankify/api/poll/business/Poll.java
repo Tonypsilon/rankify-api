@@ -80,6 +80,16 @@ public class Poll {
     }
 
     /**
+     * Checks if this poll is currently accepting votes.
+     * A poll can accept votes only when it is in the ONGOING state.
+     *
+     * @return true if the poll is in ONGOING state, false otherwise
+     */
+    public boolean canAcceptVotes() {
+        return state() == PollState.ONGOING;
+    }
+
+    /**
      * Casts a vote for this poll with the given rankings.
      * The rankings must contain only options from the ballot, and each option must have a rank.
      * If an option is not ranked, it will be assigned a sentinel rank.
@@ -88,7 +98,11 @@ public class Poll {
      * @return A new {@link Vote} instance representing the cast vote.
      * @throws PollNotReadyForVotingException if the poll is not in an ongoing state.
      * @throws IllegalArgumentException       if any option in the rankings does not belong to this poll's ballot.
+     * @deprecated Use {@link VoteFactory#createVote(Poll, Map)} instead.
+     * This method will be removed in a future version.
+     * The factory pattern better separates concerns and follows DDD principles.
      */
+    @Deprecated(since = "0.0.1", forRemoval = true)
     public Vote castVote(final Map<Option, Integer> rankings) {
         if (state() != PollState.ONGOING) {
             throw new PollNotReadyForVotingException(id);

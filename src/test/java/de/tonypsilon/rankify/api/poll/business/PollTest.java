@@ -20,6 +20,49 @@ class PollTest {
     }
 
     @Test
+    void canAcceptVotes_whenPollOngoing_shouldReturnTrue() {
+        // Given: poll is ongoing (start in the past, no end)
+        Schedule schedule = new Schedule(LocalDateTime.now().minusSeconds(10), null);
+        Poll poll = newPollWithSchedule(schedule);
+
+        // When & Then
+        assertThat(poll.canAcceptVotes()).isTrue();
+    }
+
+    @Test
+    void canAcceptVotes_whenPollInPreparation_shouldReturnFalse() {
+        // Given: poll in preparation (no start)
+        Schedule schedule = new Schedule(null, null);
+        Poll poll = newPollWithSchedule(schedule);
+
+        // When & Then
+        assertThat(poll.canAcceptVotes()).isFalse();
+    }
+
+    @Test
+    void canAcceptVotes_whenPollFinished_shouldReturnFalse() {
+        // Given: poll is finished (end in the past)
+        Schedule schedule = new Schedule(
+                LocalDateTime.now().minusMinutes(10),
+                LocalDateTime.now().minusMinutes(1)
+        );
+        Poll poll = newPollWithSchedule(schedule);
+
+        // When & Then
+        assertThat(poll.canAcceptVotes()).isFalse();
+    }
+
+    @Test
+    void canAcceptVotes_whenPollStartsInFuture_shouldReturnFalse() {
+        // Given: poll starts in the future
+        Schedule schedule = new Schedule(LocalDateTime.now().plusMinutes(10), null);
+        Poll poll = newPollWithSchedule(schedule);
+
+        // When & Then
+        assertThat(poll.canAcceptVotes()).isFalse();
+    }
+
+    @Test
     void castVote_whenPollOngoing_withPartialRankings_addsMissingOptionsWithSentinel() {
         // Given: poll already ongoing (start in the past, no end)
         Schedule schedule = new Schedule(LocalDateTime.now().minusSeconds(5), null);
