@@ -26,8 +26,8 @@ public class VoteFactory {
      * @param poll     the poll for which the vote is being cast
      * @param rankings a map of options to their rankings (1-based, lower is better)
      * @return a new Vote instance representing the cast vote
-     * @throws IllegalArgumentException       if poll is null, rankings is null,
-     *                                        or if any ranked option does not belong to the poll's ballot
+     * @throws NullPointerException           if poll is null or rankings is null
+     * @throws IllegalArgumentException       if any ranked option does not belong to the poll's ballot
      * @throws PollNotReadyForVotingException if the poll is not in a state to accept votes
      */
     public Vote createVote(Poll poll, Map<Option, Integer> rankings) {

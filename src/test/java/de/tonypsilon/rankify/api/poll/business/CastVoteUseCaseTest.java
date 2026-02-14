@@ -128,7 +128,8 @@ class CastVoteUseCaseTest {
         // Then
         // Verify that the factory is called with the correct poll and rankings
         ArgumentCaptor<Poll> pollCaptor = ArgumentCaptor.forClass(Poll.class);
-        ArgumentCaptor<Map> rankingsCaptor = ArgumentCaptor.forClass(Map.class);
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<Option, Integer>> rankingsCaptor = ArgumentCaptor.forClass(Map.class);
         verify(voteFactory).createVote(pollCaptor.capture(), rankingsCaptor.capture());
 
         assertThat(pollCaptor.getValue()).isEqualTo(poll);
