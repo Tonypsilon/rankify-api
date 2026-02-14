@@ -174,3 +174,50 @@ export CONTAINER_ENGINE=docker
 2. Check firewall settings that might block container traffic
 3. Try using Docker instead of Podman if networking issues persist
 4. Verify that ports 5432 and 8080 are available on your system
+
+## Architecture
+
+### Domain-Driven Design (DDD)
+
+The Rankify API follows Domain-Driven Design principles with clear separation of concerns:
+
+- **Entities**: `Poll` - Aggregates with identity and lifecycle management
+- **Value Objects**: `Vote`, `Option`, `Ballot`, `PollId`, `PollTitle`, etc. - Immutable objects without identity
+- **Domain Services**: `VoteFactory` - Encapsulates complex creation logic
+
+#### Vote Casting Architecture
+
+The vote casting mechanism follows best practices for DDD:
+
+**Components**:
+- **Vote Interface** - Public contract for votes (only exposes `pollId()` and `rankings()`)
+- **RecordedVote** - Package-private implementation ensuring encapsulation
+- **VoteFactory** - Domain service responsible for creating valid votes
+- **Poll.canAcceptVotes()** - Query method to check poll state
+- **CastVoteUseCase** - Application service orchestrating the process
+
+**Design Rationale**:
+- **Factory Pattern**: Vote creation is delegated to `VoteFactory` instead of being embedded in the Poll entity
+- **Single Responsibility**: Poll focuses on its lifecycle; VoteFactory handles vote creation
+- **Encapsulation**: RecordedVote is package-private; only accessible through the factory
+- **Validation Centralization**: All vote validation logic is in one place (VoteFactory)
+
+**Usage Example**:
+```java
+@Service
+public class MyService {
+    private final VoteFactory voteFactory;
+    private final PollRepository pollRepository;
+    
+    public void castVote(PollId pollId, Map<Option, Integer> rankings) {
+        Poll poll = pollRepository.getById(pollId);
+        Vote vote = voteFactory.createVote(poll, rankings);
+        pollRepository.saveVote(vote);
+    }
+}
+```
+
+For detailed analysis of the vote casting design, see:
+- `VOTE_CASTING_DESIGN_ANALYSIS.md` - Comprehensive DDD/Clean Architecture analysis
+- `VOTE_CASTING_REFACTORING_SUMMARY.md` - Summary of changes and migration guide
+- `businessModel.md` - Business domain model specification
