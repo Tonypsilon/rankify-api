@@ -48,7 +48,6 @@ public record Ballot(SequencedSet<Option> options) {
                 throw new IllegalArgumentException("Duplicate option found: " + option.text());
             }
         }
-
         return optionsSet;
     }
 }

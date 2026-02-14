@@ -16,11 +16,14 @@ class ColumnIndexTest {
 
     @Test
     void compareTo_comparesByValue() {
-        ColumnIndex c0 = new ColumnIndex(0);
-        ColumnIndex c1 = new ColumnIndex(1);
-        assertThat(c0.compareTo(c1)).isLessThan(0);
-        assertThat(c1.compareTo(c0)).isGreaterThan(0);
-        assertThat(c0.compareTo(new ColumnIndex(0))).isZero();
+        ColumnIndex zero = new ColumnIndex(0);
+        ColumnIndex one = new ColumnIndex(1);
+        assertThat(zero.lessThan(one)).isTrue();
+        assertThat(one.lessThan(zero)).isFalse();
+        assertThat(zero.greaterThan(one)).isFalse();
+        assertThat(one.greaterThan(zero)).isTrue();
+        assertThat(zero.lessThan(zero)).isFalse();
+        assertThat(zero.greaterThan(zero)).isFalse();
     }
 }
 

@@ -16,11 +16,14 @@ class RowIndexTest {
 
     @Test
     void compareTo_comparesByValue() {
-        RowIndex r0 = new RowIndex(0);
-        RowIndex r1 = new RowIndex(1);
-        assertThat(r0.compareTo(r1)).isLessThan(0);
-        assertThat(r1.compareTo(r0)).isGreaterThan(0);
-        assertThat(r0.compareTo(new RowIndex(0))).isZero();
+        RowIndex zero = new RowIndex(0);
+        RowIndex one = new RowIndex(1);
+        assertThat(zero.lessThan(one)).isTrue();
+        assertThat(one.lessThan(zero)).isFalse();
+        assertThat(zero.greaterThan(one)).isFalse();
+        assertThat(one.greaterThan(zero)).isTrue();
+        assertThat(zero.lessThan(zero)).isFalse();
+        assertThat(zero.greaterThan(zero)).isFalse();
     }
 }
 

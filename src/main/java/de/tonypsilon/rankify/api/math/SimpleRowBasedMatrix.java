@@ -32,7 +32,7 @@ class SimpleRowBasedMatrix<T> implements Matrix<T> {
     private void assertInBounds(final RowIndex row, final ColumnIndex column) {
         Objects.requireNonNull(row, "row cannot be null");
         Objects.requireNonNull(column, "column cannot be null");
-        if (row.compareTo(maxRowIndex) > 0 || column.compareTo(maxColumnIndex) > 0) {
+        if (row.greaterThan(maxRowIndex) || column.greaterThan(maxColumnIndex)) {
             throw new IndexOutOfBoundsException(
                     "Index (" + row + "," + column + ") out of bounds for max indices (" +
                             maxRowIndex + "," + maxColumnIndex + ")"
