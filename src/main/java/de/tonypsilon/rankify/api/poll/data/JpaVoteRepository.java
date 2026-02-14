@@ -4,7 +4,7 @@ import de.tonypsilon.rankify.api.poll.business.Option;
 import de.tonypsilon.rankify.api.poll.business.Vote;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
@@ -32,7 +32,7 @@ class JpaVoteRepository {
         VoteEntity voteEntity = new VoteEntity();
         voteEntity.setId(UUID.randomUUID());
         voteEntity.setPollId(pollId);
-        voteEntity.setSubmittedAt(LocalDateTime.now());
+        voteEntity.setSubmittedAt(Instant.now());
 
         for (Map.Entry<Option, Integer> e : vote.rankings().entrySet()) {
             Option option = e.getKey();

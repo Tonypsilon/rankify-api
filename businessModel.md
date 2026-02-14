@@ -25,8 +25,8 @@ The `Poll` is the central entity in our domain. It represents a voting session w
 - `title` (String) - Human-readable name for the poll
 - `description` (String) - Optional detailed description
 - `options` (Set<Option>) - The set of unique options to be ranked
-- `startDate` (LocalDateTime) - When voting begins
-- `endDate` (LocalDateTime) - When voting ends
+- `startDate` (Instant) - When voting begins
+- `endDate` (Instant) - When voting ends
 - `state` (PollState) - Current state of the poll
 
 **Lifecycle States:**
@@ -67,7 +67,7 @@ Represents the voting form presented to a participant, containing all options fo
 **Attributes:**
 - `pollId` (UUID) - Reference to the poll
 - `options` (List<Option>) - Ordered list of options as they appear on the ballot
-- `generatedAt` (LocalDateTime) - When the ballot was generated
+- `generatedAt` (Instant) - When the ballot was generated
 
 **Business Rules:**
 - Can only be generated for polls in ONGOING state
@@ -84,7 +84,7 @@ Represents a participant's ranking of options in a poll.
 **Attributes:**
 - `pollId` (UUID) - Reference to the poll being voted on
 - `rankings` (Map<Option, Integer>) - Option to rank mapping (1 = highest preference)
-- `submittedAt` (LocalDateTime) - When the vote was cast
+- `submittedAt` (Instant) - When the vote was cast
 
 **Business Rules:**
 - Can only be cast for polls in ONGOING state
@@ -104,7 +104,7 @@ Represents the calculated results of a completed poll.
 - `pollId` (UUID) - Reference to the poll
 - `finalRanking` (List<RankedOption>) - Final ranking of all options
 - `totalVotes` (Integer) - Total number of votes cast
-- `calculatedAt` (LocalDateTime) - When results were calculated
+- `calculatedAt` (Instant) - When results were calculated
 
 **Business Rules:**
 - Can only be calculated for polls in FINISHED state
@@ -140,8 +140,8 @@ erDiagram
         UUID id
         String title
         String description
-        LocalDateTime startDate
-        LocalDateTime endDate
+        Instant startDate
+        Instant endDate
         PollState state
     }
     
@@ -152,18 +152,18 @@ erDiagram
     
     Ballot {
         UUID pollId
-        LocalDateTime generatedAt
+        Instant generatedAt
     }
     
     Vote {
         UUID pollId
-        LocalDateTime submittedAt
+        Instant submittedAt
     }
     
     PollResult {
         UUID pollId
         Integer totalVotes
-        LocalDateTime calculatedAt
+        Instant calculatedAt
     }
     
     RankedOption {

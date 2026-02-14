@@ -2,7 +2,7 @@ package de.tonypsilon.rankify.api.poll.business;
 
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -16,13 +16,13 @@ class PollTest {
 
     private Poll newPollWithSchedule(Schedule schedule) {
         Ballot ballot = new Ballot(List.of(new Option("Option A"), new Option("Option B"), new Option("Option C")));
-        return new Poll(new PollId(UUID.randomUUID()), new PollTitle("Test Poll"), ballot, schedule, LocalDateTime.now());
+        return new Poll(new PollId(UUID.randomUUID()), new PollTitle("Test Poll"), ballot, schedule, Instant.now());
     }
 
     @Test
     void castVote_whenPollOngoing_withPartialRankings_addsMissingOptionsWithSentinel() {
         // Given: poll already ongoing (start in the past, no end)
-        Schedule schedule = new Schedule(LocalDateTime.now().minusSeconds(5), null);
+        Schedule schedule = new Schedule(Instant.now().minusSeconds(5), null);
         Poll poll = newPollWithSchedule(schedule);
         Option rankedOption = poll.ballot().options().getFirst();
         Map<Option, Integer> partialRankings = Map.of(rankedOption, 1);
@@ -56,7 +56,7 @@ class PollTest {
     @Test
     void castVote_withOptionNotInBallot_throwsIllegalArgumentException() {
         // Given: ongoing poll
-        Poll poll = newPollWithSchedule(new Schedule(LocalDateTime.now().minusSeconds(10), null));
+        Poll poll = newPollWithSchedule(new Schedule(Instant.now().minusSeconds(10), null));
         var foreignOption = Map.of(new Option("Foreign Option"), 1);
 
         // When & Then
@@ -82,7 +82,7 @@ class PollTest {
     @Test
     void startVoting_whenAlreadyOngoing_throwsIllegalStateException() {
         // Given: already ongoing (start in past)
-        Poll poll = newPollWithSchedule(new Schedule(LocalDateTime.now().minusSeconds(30), null));
+        Poll poll = newPollWithSchedule(new Schedule(Instant.now().minusSeconds(30), null));
 
         // When & Then
         assertThatExceptionOfType(IllegalStateException.class)
@@ -92,7 +92,7 @@ class PollTest {
     @Test
     void endVoting_whenOngoing_setsEndTimeAndPreventsFurtherVotes() {
         // Given: ongoing poll
-        Poll poll = newPollWithSchedule(new Schedule(LocalDateTime.now().minusSeconds(2), null));
+        Poll poll = newPollWithSchedule(new Schedule(Instant.now().minusSeconds(2), null));
         assertThat(poll.schedule().end()).isNull();
 
         // When
@@ -120,7 +120,7 @@ class PollTest {
     @Test
     void castVote_preservesExplicitRankingOrderAndNoMutation() {
         // Given: ongoing poll
-        Poll poll = newPollWithSchedule(new Schedule(LocalDateTime.now().minusSeconds(5), null));
+        Poll poll = newPollWithSchedule(new Schedule(Instant.now().minusSeconds(5), null));
         Option first = poll.ballot().options().getFirst();
         Option second = poll.ballot().options().stream().skip(1).findFirst().orElseThrow();
         Option third = poll.ballot().options().getLast();

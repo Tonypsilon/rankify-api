@@ -7,7 +7,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -23,7 +23,7 @@ public class VoteEntity {
     private UUID pollId;
 
     @Column(name = "submitted_at")
-    private LocalDateTime submittedAt;
+    private Instant submittedAt;
 
     @OneToMany(mappedBy = "vote", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Ranking> rankings = new LinkedHashSet<>();
@@ -47,11 +47,11 @@ public class VoteEntity {
         this.pollId = pollId;
     }
 
-    public LocalDateTime getSubmittedAt() {
+    public Instant getSubmittedAt() {
         return submittedAt;
     }
 
-    public void setSubmittedAt(final LocalDateTime submittedAt) {
+    public void setSubmittedAt(final Instant submittedAt) {
         this.submittedAt = submittedAt;
     }
 

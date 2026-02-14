@@ -2,7 +2,7 @@ package de.tonypsilon.rankify.api.poll.business;
 
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Service
 public class InitiatePollUseCase {
@@ -33,7 +33,7 @@ public class InitiatePollUseCase {
                 command.title(),
                 command.ballot(),
                 command.schedule(),
-                LocalDateTime.now()
+                Instant.now()
         );
         return pollRepository.create(poll);
     }
