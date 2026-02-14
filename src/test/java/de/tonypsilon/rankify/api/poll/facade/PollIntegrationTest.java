@@ -17,7 +17,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -118,8 +118,8 @@ class PollIntegrationTest {
 
         @Test
         void createPollWithEndBeforeStartReturnsBadRequest() {
-            LocalDateTime now = LocalDateTime.now();
-            CreatePollRequest body = new CreatePollRequest(new TitlePart("Bad schedule"), new BallotPart(List.of(new OptionPart("A"), new OptionPart("B"))), new SchedulePart(now, now.minusMinutes(5)));
+            Instant now = Instant.now();
+            CreatePollRequest body = new CreatePollRequest(new TitlePart("Bad schedule"), new BallotPart(List.of(new OptionPart("A"), new OptionPart("B"))), new SchedulePart(now, now.minusSeconds(300)));
             ResponseEntity<String> resp = rest.postForEntity("/polls", body, String.class);
             assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         }
@@ -237,7 +237,7 @@ class PollIntegrationTest {
     record OptionPart(String text) {
     }
 
-    record SchedulePart(LocalDateTime start, LocalDateTime end) {
+    record SchedulePart(Instant start, Instant end) {
     }
 
     // For PATCH requests; mirrors shape expected by PatchPollCommand (operation + optional fields)
@@ -250,10 +250,10 @@ class PollIntegrationTest {
                                String title,
                                List<String> options,
                                ScheduleResponse schedule,
-                               LocalDateTime created) {
+                               Instant created) {
     }
 
-    record ScheduleResponse(LocalDateTime start, LocalDateTime end) {
+    record ScheduleResponse(Instant start, Instant end) {
     }
 
     // Added response mirrors for ballot endpoint

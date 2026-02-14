@@ -2,7 +2,7 @@ package de.tonypsilon.rankify.api.poll.business;
 
 import jakarta.annotation.Nonnull;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -13,13 +13,13 @@ public class Poll {
     private PollTitle title;
     private Ballot ballot;
     private Schedule schedule;
-    private final LocalDateTime created;
+    private final Instant created;
 
     public Poll(final PollId id,
                 final PollTitle title,
                 final Ballot ballot,
                 final Schedule schedule,
-                final LocalDateTime created) {
+                final Instant created) {
         this.id = id;
         this.title = title;
         this.ballot = ballot;
@@ -28,7 +28,7 @@ public class Poll {
     }
 
     public void startVoting() {
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         if (this.state() != PollState.IN_PREPARATION) {
             throw new IllegalStateException("Cannot start voting when poll is not in preparation");
         }
@@ -36,7 +36,7 @@ public class Poll {
     }
 
     public void endVoting() {
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         if (this.state() != PollState.ONGOING) {
             throw new IllegalStateException("Cannot finish voting when poll is not ongoing");
         }
@@ -44,7 +44,7 @@ public class Poll {
     }
 
     private PollState state() {
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         // Consider finished if end is at or before now
         if (schedule.end() != null && !schedule.end().isAfter(now)) {
             return PollState.FINISHED;
@@ -75,7 +75,7 @@ public class Poll {
         return schedule;
     }
 
-    public LocalDateTime created() {
+    public Instant created() {
         return created;
     }
 

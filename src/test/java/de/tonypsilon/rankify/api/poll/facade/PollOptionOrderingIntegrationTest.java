@@ -56,14 +56,14 @@ class PollOptionOrderingIntegrationTest {
     record OptionPart(String text) {
     }
 
-    record SchedulePart(java.time.LocalDateTime start, java.time.LocalDateTime end) {
+    record SchedulePart(java.time.Instant start, java.time.Instant end) {
     }
 
     record PollDetailsResponse(UUID id, String title, List<String> options, ScheduleResponse schedule,
-                               java.time.LocalDateTime created) {
+                               java.time.Instant created) {
     }
 
-    record ScheduleResponse(java.time.LocalDateTime start, java.time.LocalDateTime end) {
+    record ScheduleResponse(java.time.Instant start, java.time.Instant end) {
     }
 
     record BallotResponse(List<OptionResponse> options) {

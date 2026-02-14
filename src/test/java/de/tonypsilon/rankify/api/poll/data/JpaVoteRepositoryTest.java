@@ -18,7 +18,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -131,8 +131,8 @@ class JpaVoteRepositoryTest {
     private Poll newPollWithOptions(String title, List<String> optionTexts) {
         PollId id = new PollId(UUID.randomUUID());
         Ballot ballot = new Ballot(optionTexts.stream().map(Option::new).toList());
-        Schedule schedule = new Schedule(LocalDateTime.now().minusMinutes(5), LocalDateTime.now().plusMinutes(5));
-        return new Poll(id, new PollTitle(title), ballot, schedule, LocalDateTime.now());
+        Schedule schedule = new Schedule(Instant.now().minusSeconds(300), Instant.now().plusSeconds(300));
+        return new Poll(id, new PollTitle(title), ballot, schedule, Instant.now());
     }
 
     // Simple test implementation of Vote interface

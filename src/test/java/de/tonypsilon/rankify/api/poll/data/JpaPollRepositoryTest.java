@@ -20,7 +20,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -60,7 +60,7 @@ class JpaPollRepositoryTest {
     @Test
     void createAndGetByIdReturnsPersistedPollWithOptionsSortedByText() {
         List<String> optionTexts = List.of("Pizza", "Sushi");
-        Poll poll = newPollWithOptions("Lunch", optionTexts, LocalDateTime.now().minusHours(1), null);
+        Poll poll = newPollWithOptions("Lunch", optionTexts, Instant.now().minusSeconds(3600), null);
 
         PollId createdId = repository.create(poll);
         assertThat(createdId).isNotNull();
@@ -93,7 +93,7 @@ class JpaPollRepositoryTest {
         PollId id = repository.create(poll);
 
         List<String> newOptions = List.of("Green", "Yellow", "Purple");
-        Schedule newSchedule = new Schedule(LocalDateTime.now().minusMinutes(10), LocalDateTime.now().plusMinutes(10));
+        Schedule newSchedule = new Schedule(Instant.now().minusSeconds(600), Instant.now().plusSeconds(600));
         Poll updated = cloneChanging(poll, newOptions, newSchedule);
 
         repository.update(updated);
@@ -112,7 +112,7 @@ class JpaPollRepositoryTest {
         PollId id = repository.create(poll);
 
         // Re-create poll instance with same option set but reversed order (sorted lists equal) and changed schedule
-        Schedule newSchedule = new Schedule(LocalDateTime.now().minusMinutes(2), LocalDateTime.now().plusMinutes(2));
+        Schedule newSchedule = new Schedule(Instant.now().minusSeconds(120), Instant.now().plusSeconds(120));
         Poll reordered = new Poll(id, poll.title(), new Ballot(List.of("Green", "Blue", "Red").stream().map(Option::new).toList()), newSchedule, poll.created());
 
         repository.update(reordered);
@@ -140,8 +140,8 @@ class JpaPollRepositoryTest {
 
     @Test
     void createPollWithEndTimePersistsEndTime() {
-        LocalDateTime start = LocalDateTime.now().minusHours(3);
-        LocalDateTime end = LocalDateTime.now().minusHours(1);
+        Instant start = Instant.now().minusSeconds(10800);
+        Instant end = Instant.now().minusSeconds(3600);
         Poll poll = newPollWithOptions("Meeting", List.of("Topic A", "Topic B"), start, end);
         repository.create(poll);
         Poll loaded = repository.getById(poll.id());
@@ -186,11 +186,11 @@ class JpaPollRepositoryTest {
         }
     }
 
-    private Poll newPollWithOptions(String title, List<String> optionTexts, LocalDateTime start, LocalDateTime end) {
+    private Poll newPollWithOptions(String title, List<String> optionTexts, Instant start, Instant end) {
         PollId id = new PollId();
         Ballot ballot = new Ballot(optionTexts.stream().map(Option::new).toList());
         Schedule schedule = new Schedule(start, end);
-        return new Poll(id, new PollTitle(title), ballot, schedule, LocalDateTime.now());
+        return new Poll(id, new PollTitle(title), ballot, schedule, Instant.now());
     }
 
     private Poll cloneChanging(Poll original, List<String> optionTexts, Schedule schedule) {
