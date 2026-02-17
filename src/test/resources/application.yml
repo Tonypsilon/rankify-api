@@ -10,6 +10,8 @@ spring:
       ddl-auto: none
     show-sql: false
     open-in-view: false
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
 
 server:
   port: 0

@@ -1,16 +1,24 @@
 package de.tonypsilon.rankify.api.poll.facade;
 
+import liquibase.integration.spring.SpringLiquibase;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.web.client.RestClient;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import javax.sql.DataSource;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,8 +31,20 @@ import static org.assertj.core.api.Assertions.assertThat;
  * that differs from natural/alphabetical ordering to detect unintended sorting.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Import(PollOptionOrderingIntegrationTest.LiquibaseTestConfiguration.class)
 @Testcontainers
 class PollOptionOrderingIntegrationTest {
+
+    @TestConfiguration
+    static class LiquibaseTestConfiguration {
+        @Bean
+        public SpringLiquibase liquibase(DataSource dataSource) {
+            SpringLiquibase liquibase = new SpringLiquibase();
+            liquibase.setDataSource(dataSource);
+            liquibase.setChangeLog("classpath:db/changelog/db.changelog-master.yaml");
+            return liquibase;
+        }
+    }
 
     @Container
     @SuppressWarnings("resource")
@@ -41,8 +61,20 @@ class PollOptionOrderingIntegrationTest {
         registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
     }
 
+    @LocalServerPort
+    private int port;
+
     @Autowired
-    private TestRestTemplate rest;
+    private RestClient.Builder restClientBuilder;
+
+    private RestClient restClient;
+
+    @BeforeEach
+    void setUp() {
+        restClient = restClientBuilder
+                .baseUrl("http://localhost:" + port)
+                .build();
+    }
 
     record CreatePollRequest(TitlePart title, BallotPart ballot, SchedulePart schedule) {
     }
@@ -83,22 +115,29 @@ class PollOptionOrderingIntegrationTest {
         );
         CreatePollRequest body = new CreatePollRequest(new TitlePart("Ordering Test"), new BallotPart(originalOrder), new SchedulePart(null, null));
 
-        ResponseEntity<UUID> created = rest.postForEntity("/polls", body, UUID.class);
-        assertThat(created.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        UUID pollId = created.getBody();
+        UUID pollId = restClient.post()
+                .uri("/polls")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body)
+                .retrieve()
+                .onStatus(status -> status.value() != HttpStatus.CREATED.value(),
+                        (request, response) -> { throw new AssertionError("Expected 201 CREATED but got " + response.getStatusCode()); })
+                .body(UUID.class);
         assertThat(pollId).isNotNull();
 
         // Fetch poll details and verify order preserved
-        ResponseEntity<PollDetailsResponse> detailsResp = rest.getForEntity("/polls/" + pollId, PollDetailsResponse.class);
-        assertThat(detailsResp.getStatusCode()).isEqualTo(HttpStatus.OK);
-        PollDetailsResponse details = detailsResp.getBody();
+        PollDetailsResponse details = restClient.get()
+                .uri("/polls/" + pollId)
+                .retrieve()
+                .body(PollDetailsResponse.class);
         assertThat(details).isNotNull();
         assertThat(details.options()).containsExactly("Zulu", "Alpha", "Mike", "Bravo");
 
         // Fetch ballot endpoint and verify order preserved
-        ResponseEntity<BallotResponse> ballotResp = rest.getForEntity("/polls/" + pollId + "/ballot", BallotResponse.class);
-        assertThat(ballotResp.getStatusCode()).isEqualTo(HttpStatus.OK);
-        BallotResponse ballot = ballotResp.getBody();
+        BallotResponse ballot = restClient.get()
+                .uri("/polls/" + pollId + "/ballot")
+                .retrieve()
+                .body(BallotResponse.class);
         assertThat(ballot).isNotNull();
         assertThat(ballot.options().stream().map(OptionResponse::text).toList())
                 .containsExactly("Zulu", "Alpha", "Mike", "Bravo");

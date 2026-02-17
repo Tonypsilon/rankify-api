@@ -1,21 +1,26 @@
 package de.tonypsilon.rankify.api.poll.facade;
 
+import liquibase.integration.spring.SpringLiquibase;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.web.client.RestClient;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import javax.sql.DataSource;
 
 import java.time.Instant;
 import java.util.List;
@@ -29,8 +34,20 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Covers poll creation, lifecycle management (start/end voting) and input validation error scenarios.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Import(PollIntegrationTest.LiquibaseTestConfiguration.class)
 @Testcontainers
 class PollIntegrationTest {
+
+    @TestConfiguration
+    static class LiquibaseTestConfiguration {
+        @Bean
+        public SpringLiquibase liquibase(DataSource dataSource) {
+            SpringLiquibase liquibase = new SpringLiquibase();
+            liquibase.setDataSource(dataSource);
+            liquibase.setChangeLog("classpath:db/changelog/db.changelog-master.yaml");
+            return liquibase;
+        }
+    }
 
     @Container
     @SuppressWarnings("resource")
@@ -47,8 +64,20 @@ class PollIntegrationTest {
         registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
     }
 
+    @LocalServerPort
+    private int port;
+
     @Autowired
-    private TestRestTemplate rest;
+    private RestClient.Builder restClientBuilder;
+
+    private RestClient restClient;
+
+    @BeforeEach
+    void setUp() {
+        restClient = restClientBuilder
+                .baseUrl("http://localhost:" + port)
+                .build();
+    }
 
     // --- Happy path lifecycle -------------------------------------------------------------
 
@@ -60,9 +89,14 @@ class PollIntegrationTest {
                 new BallotPart(List.of(new OptionPart("Pizza"), new OptionPart("Sushi"))),
                 new SchedulePart(null, null)
         );
-        ResponseEntity<UUID> created = rest.postForEntity("/polls", createBody, UUID.class);
-        assertThat(created.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        UUID pollId = created.getBody();
+        UUID pollId = restClient.post()
+                .uri("/polls")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(createBody)
+                .retrieve()
+                .onStatus(status -> status.value() != HttpStatus.CREATED.value(), 
+                        (request, response) -> { throw new AssertionError("Expected 201 CREATED but got " + response.getStatusCode()); })
+                .body(UUID.class);
         assertThat(pollId).isNotNull();
 
         // 2. Fetch details right after creation
@@ -105,123 +139,188 @@ class PollIntegrationTest {
         @Test
         void createPollWithSingleOptionReturnsBadRequest() {
             CreatePollRequest body = new CreatePollRequest(new TitlePart("Too few"), new BallotPart(List.of(new OptionPart("Only"))), new SchedulePart(null, null));
-            ResponseEntity<String> resp = rest.postForEntity("/polls", body, String.class);
-            assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+            HttpStatusCode status = restClient.post()
+                    .uri("/polls")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, (request, response) -> {})
+                    .toBodilessEntity()
+                    .getStatusCode();
+            assertThat(status).isEqualTo(HttpStatus.BAD_REQUEST);
         }
 
         @Test
         void createPollWithBlankOptionReturnsBadRequest() {
             CreatePollRequest body = new CreatePollRequest(new TitlePart("Blank option"), new BallotPart(List.of(new OptionPart(" "), new OptionPart("B"))), new SchedulePart(null, null));
-            ResponseEntity<String> resp = rest.postForEntity("/polls", body, String.class);
-            assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+            HttpStatusCode status = restClient.post()
+                    .uri("/polls")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, (request, response) -> {})
+                    .toBodilessEntity()
+                    .getStatusCode();
+            assertThat(status).isEqualTo(HttpStatus.BAD_REQUEST);
         }
 
         @Test
         void createPollWithEndBeforeStartReturnsBadRequest() {
             Instant now = Instant.now();
             CreatePollRequest body = new CreatePollRequest(new TitlePart("Bad schedule"), new BallotPart(List.of(new OptionPart("A"), new OptionPart("B"))), new SchedulePart(now, now.minusSeconds(300)));
-            ResponseEntity<String> resp = rest.postForEntity("/polls", body, String.class);
-            assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+            HttpStatusCode status = restClient.post()
+                    .uri("/polls")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, (request, response) -> {})
+                    .toBodilessEntity()
+                    .getStatusCode();
+            assertThat(status).isEqualTo(HttpStatus.BAD_REQUEST);
         }
 
         @Test
         void createPollWithBlankTitleReturnsBadRequest() {
             CreatePollRequest body = new CreatePollRequest(new TitlePart(""), new BallotPart(List.of(new OptionPart("A"), new OptionPart("B"))), new SchedulePart(null, null));
-            ResponseEntity<String> resp = rest.postForEntity("/polls", body, String.class);
-            assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+            HttpStatusCode status = restClient.post()
+                    .uri("/polls")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, (request, response) -> {})
+                    .toBodilessEntity()
+                    .getStatusCode();
+            assertThat(status).isEqualTo(HttpStatus.BAD_REQUEST);
         }
 
         @Test
         void createPollWithDuplicateOptionsReturnsBadRequest() {
             CreatePollRequest body = new CreatePollRequest(new TitlePart("Dupes"), new BallotPart(List.of(new OptionPart("A"), new OptionPart("A"))), new SchedulePart(null, null));
-            ResponseEntity<String> resp = rest.postForEntity("/polls", body, String.class);
-            assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+            HttpStatusCode status = restClient.post()
+                    .uri("/polls")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, (request, response) -> {})
+                    .toBodilessEntity()
+                    .getStatusCode();
+            assertThat(status).isEqualTo(HttpStatus.BAD_REQUEST);
         }
 
         @Test
         void patchPollWithNullOperationReturnsBadRequest() {
             UUID pollId = createValidPoll();
             // Manually craft JSON with null operation to avoid serialization adjustments
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
             String json = "{\"operation\":null}"; // invalid
-            ResponseEntity<String> resp = rest.exchange("/polls/" + pollId, HttpMethod.PATCH, new HttpEntity<>(json, headers), String.class);
-            assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+            HttpStatusCode status = restClient.patch()
+                    .uri("/polls/" + pollId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(json)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, (request, response) -> {})
+                    .toBodilessEntity()
+                    .getStatusCode();
+            assertThat(status).isEqualTo(HttpStatus.BAD_REQUEST);
         }
 
         @Test
         void patchUpdateTitleWithoutNewTitleReturnsBadRequest() {
             UUID pollId = createValidPoll();
-            ResponseEntity<String> resp = patchPoll(pollId, new PatchRequest("UPDATE_TITLE", null, null, null));
-            assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+            HttpStatusCode status = patchPollForStatus(pollId, new PatchRequest("UPDATE_TITLE", null, null, null));
+            assertThat(status).isEqualTo(HttpStatus.BAD_REQUEST);
         }
 
         @Test
         void patchUpdateScheduleWithoutNewScheduleReturnsBadRequest() {
             UUID pollId = createValidPoll();
-            ResponseEntity<String> resp = patchPoll(pollId, new PatchRequest("UPDATE_SCHEDULE", null, null, null));
-            assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+            HttpStatusCode status = patchPollForStatus(pollId, new PatchRequest("UPDATE_SCHEDULE", null, null, null));
+            assertThat(status).isEqualTo(HttpStatus.BAD_REQUEST);
         }
 
         @Test
         void patchUpdateOptionsWithoutNewBallotReturnsBadRequest() {
             UUID pollId = createValidPoll();
-            ResponseEntity<String> resp = patchPoll(pollId, new PatchRequest("UPDATE_OPTIONS", null, null, null));
-            assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+            HttpStatusCode status = patchPollForStatus(pollId, new PatchRequest("UPDATE_OPTIONS", null, null, null));
+            assertThat(status).isEqualTo(HttpStatus.BAD_REQUEST);
         }
 
         @Test
         void patchPollStartVotingTwiceReturnsServerErrorIllegalState() {
             UUID pollId = createValidPoll();
             patchPoll(pollId, new PatchRequest("START_VOTING", null, null, null), HttpStatus.NO_CONTENT);
-            ResponseEntity<String> resp = patchPoll(pollId, new PatchRequest("START_VOTING", null, null, null));
-            assertThat(resp.getStatusCode().is5xxServerError()).isTrue();
+            HttpStatusCode status = patchPollForStatus(pollId, new PatchRequest("START_VOTING", null, null, null));
+            assertThat(status.is5xxServerError()).isTrue();
         }
     }
 
     // --- Helpers --------------------------------------------------------------------------
 
     private PollDetailsResponse getDetails(UUID pollId) {
-        ResponseEntity<PollDetailsResponse> details = rest.getForEntity("/polls/" + pollId, PollDetailsResponse.class);
-        assertThat(details.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(details.getBody()).isNotNull();
-        return details.getBody();
+        PollDetailsResponse details = restClient.get()
+                .uri("/polls/" + pollId)
+                .retrieve()
+                .body(PollDetailsResponse.class);
+        assertThat(details).isNotNull();
+        return details;
     }
 
     private BallotResponse getBallot(UUID pollId) {
-        ResponseEntity<BallotResponse> resp = rest.getForEntity("/polls/" + pollId + "/ballot", BallotResponse.class);
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(resp.getBody()).isNotNull();
-        return resp.getBody();
+        BallotResponse ballot = restClient.get()
+                .uri("/polls/" + pollId + "/ballot")
+                .retrieve()
+                .body(BallotResponse.class);
+        assertThat(ballot).isNotNull();
+        return ballot;
     }
 
     private UUID createValidPoll() {
         CreatePollRequest body = new CreatePollRequest(new TitlePart("Valid"), new BallotPart(List.of(new OptionPart("A"), new OptionPart("B"))), new SchedulePart(null, null));
-        ResponseEntity<UUID> resp = rest.postForEntity("/polls", body, UUID.class);
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        return resp.getBody();
+        UUID pollId = restClient.post()
+                .uri("/polls")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body)
+                .retrieve()
+                .onStatus(status -> status.value() != HttpStatus.CREATED.value(), 
+                        (request, response) -> { throw new AssertionError("Expected 201 CREATED but got " + response.getStatusCode()); })
+                .body(UUID.class);
+        assertThat(pollId).isNotNull();
+        return pollId;
     }
 
     private void patchPoll(UUID pollId, PatchRequest body, HttpStatus expected) {
-        ResponseEntity<Void> resp = rest.exchange("/polls/" + pollId, HttpMethod.PATCH, new HttpEntity<>(body, jsonHeaders()), Void.class);
-        assertThat(resp.getStatusCode()).isEqualTo(expected);
+        HttpStatusCode status = restClient.patch()
+                .uri("/polls/" + pollId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, (request, response) -> {})
+                .toBodilessEntity()
+                .getStatusCode();
+        assertThat(status).isEqualTo(expected);
     }
 
-    private ResponseEntity<String> patchPoll(UUID pollId, PatchRequest body) {
-        return rest.exchange("/polls/" + pollId, HttpMethod.PATCH, new HttpEntity<>(body, jsonHeaders()), String.class);
+    private HttpStatusCode patchPollForStatus(UUID pollId, PatchRequest body) {
+        return restClient.patch()
+                .uri("/polls/" + pollId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, (request, response) -> {})
+                .toBodilessEntity()
+                .getStatusCode();
     }
 
     private void castVote(UUID pollId, Map<String, Integer> rankings) {
-        HttpHeaders headers = jsonHeaders();
         CastVoteRequest body = new CastVoteRequest(rankings);
-        ResponseEntity<Void> resp = rest.postForEntity("/polls/" + pollId + "/votes", new HttpEntity<>(body, headers), Void.class);
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
-    }
-
-    private HttpHeaders jsonHeaders() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        return headers;
+        HttpStatusCode status = restClient.post()
+                .uri("/polls/" + pollId + "/votes")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, (request, response) -> {})
+                .toBodilessEntity()
+                .getStatusCode();
+        assertThat(status).isEqualTo(HttpStatus.NO_CONTENT);
     }
 
     // --- Test-local request record types to craft valid & invalid JSON payloads ------------

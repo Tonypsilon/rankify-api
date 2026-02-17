@@ -7,18 +7,23 @@ import de.tonypsilon.rankify.api.poll.business.PollId;
 import de.tonypsilon.rankify.api.poll.business.PollNotFoundException;
 import de.tonypsilon.rankify.api.poll.business.PollTitle;
 import de.tonypsilon.rankify.api.poll.business.Schedule;
+import liquibase.integration.spring.SpringLiquibase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import javax.sql.DataSource;
 
 import java.time.Instant;
 import java.util.List;
@@ -34,9 +39,20 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({PollMapper.class, JpaPollRepository.class, JpaVoteRepository.class})
+@Import({PollMapper.class, JpaPollRepository.class, JpaVoteRepository.class, JpaPollRepositoryTest.LiquibaseTestConfiguration.class})
 @Testcontainers
 class JpaPollRepositoryTest {
+
+    @TestConfiguration
+    static class LiquibaseTestConfiguration {
+        @Bean
+        public SpringLiquibase liquibase(DataSource dataSource) {
+            SpringLiquibase liquibase = new SpringLiquibase();
+            liquibase.setDataSource(dataSource);
+            liquibase.setChangeLog("classpath:db/changelog/db.changelog-master.yaml");
+            return liquibase;
+        }
+    }
 
     @Container
     @SuppressWarnings("resource") // Testcontainers manages the lifecycle of this container
